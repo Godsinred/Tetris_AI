@@ -51,6 +51,13 @@ const dropSpeed4 = 250;
 const dropSpeed5 = 150;
 var dropSpeed = initialDropSpeed;
 
+// shift aount for trying new rotation
+var shiftAmount = 0;
+// which function called collisionDirection
+var rotateCall = "NONE";
+// for determining which way we can possibly wall kick
+var collisionDirection = "NONE";
+
 // draws a boarder around the canvas
 function drawBoarder()
 {
@@ -186,8 +193,6 @@ Piece.prototype.moveDown = function()
     {
       // locks the color and the cells into the board
       this.lock();
-      // gets the next piece to be dropped
-      this.getNextPiece();
     }
   }
 }
@@ -208,11 +213,28 @@ Piece.prototype.moveLeft = function()
 // only have the ability to rotate clockwise
 Piece.prototype.rotate = function()
 {
-
+  // rotateCall = "CLOCK";
   if(!this.collision(0, 0, this.tetromino[(this.tetrominoN + 1) % 4]))
   {
+
     this.unDraw();
     this.activeTetromino = this.tetromino[(++this.tetrominoN) % 4];
+    this.draw();
+    // resets the lock time
+    lockTime = Date.now();
+  }
+}
+
+// only have the ability to rotate clockwise
+Piece.prototype.counterRotate = function()
+{
+  // rotateCall = "COUNTER";
+  if(!this.collision(0, 0, this.tetromino[(this.tetrominoN + 3) % 4]))
+  {
+
+    this.unDraw();
+    this.tetrominoN = (this.tetrominoN + 3) % 4;
+    this.activeTetromino = this.tetromino[this.tetrominoN];
     this.draw();
     // resets the lock time
     lockTime = Date.now();
@@ -232,6 +254,20 @@ Piece.prototype.moveRight = function()
   }
 }
 
+// hard drops the piece to the lowest row it can go and locks it in place
+Piece.prototype.hardDrop = function()
+{
+  while(!this.collision(0, 1, this.activeTetromino))
+  {
+
+    this.y++;
+
+  }
+  this.unDraw();
+  this.draw();
+  this.lock()
+}
+
 // listens for keyboard input and based on the inputs code it does moves the piece
 // accordingly
 document.addEventListener("keydown", CONTROL);
@@ -244,10 +280,15 @@ function CONTROL(event)
     {
         piece.moveLeft();
     }
-    // space
-    else if(event.keyCode == 32)
+    // c
+    else if(event.keyCode == 67)
     {
         piece.rotate();
+    }
+    // x
+    else if(event.keyCode == 88)
+    {
+        piece.counterRotate();
     }
     // right
     else if(event.keyCode == 39)
@@ -258,6 +299,10 @@ function CONTROL(event)
     else if(event.keyCode == 40)
     {
         piece.moveDown();
+    }
+    else if(event.keyCode == 38)
+    {
+        piece.hardDrop();
     }
 }
 
@@ -280,8 +325,19 @@ Piece.prototype.collision = function(offsetX, offsetY, pieceType)
       let newY = this.y + i + offsetY;
 
       // checks if it will collide with the wall
-      if(newX >= COLUMN || newX < 0 || newY >= ROW)
+      if(newX >= COLUMN)
       {
+        collisionDirection = "RIGHT";
+        return true;
+      }
+      else if(newX < 0 || newY >= ROW)
+      {
+        collisionDirection = "LEFT";
+        return true;
+      }
+      else if(newY >= ROW)
+      {
+        collisionDirection = "BOTTOM";
         return true;
       }
 
@@ -295,12 +351,35 @@ Piece.prototype.collision = function(offsetX, offsetY, pieceType)
       // checks if there new new spot is not empty
       if( board[newY][newX] != EMPTY)
       {
+        // collision on the right
+        if(newX - this.x > 0)
+        {
+          shiftAmount = -1;
+        }
+        else if(newX - this.x < 0)
+        {
+          shiftAmount = 1;
+
+        }
+        // if(rotateCall == "COUNTER")
+        // {
+        //   collisionDirection = "LEFT";
+        // }
+        // else if(rotateCall == "CLOCK")
+        // {
+        //   collisionDirection = "RIGHT";
+        // }
         return true;
       }
     }
   }
   // there was no collision
   return false;
+}
+
+Piece.prototype.calcShiftAmount = function()
+{
+
 }
 
 // drops the current piece at the current speed of the game
@@ -395,6 +474,9 @@ Piece.prototype.lock = function()
 
  // updates the score
  scoreElement.innerHTML = score;
+
+ // gets the next piece to be dropped
+ this.getNextPiece();
 }
 
 Piece.prototype.getNextPiece = function()
@@ -406,7 +488,7 @@ Piece.prototype.getNextPiece = function()
   randomNum = Math.floor(Math.random() * PIECES.length)
   // adds a piece to replace the one that was taken
   listOfNextPieces.push(new Piece(PIECES[randomNum][0], PIECES[randomNum][1]));
-  console.log(listOfNextPieces);
+  // console.log(listOfNextPieces);
 }
 
 // draws the board and the boarder around it
