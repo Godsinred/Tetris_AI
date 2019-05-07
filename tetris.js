@@ -34,6 +34,8 @@ const PIECES = [
     [J,"ORANGE"]
 ];
 
+var listOfNextPieces = [];
+
 // the time since the last drop
 var dropTime = Date.now();
 // for determining if the game is over or not
@@ -115,15 +117,24 @@ function Piece(tetromino, color)
     this.x = 3;
     this.y = -2;
 
-    // list of the next pieces to come
-    // the start always has one of each piece in a random order before giving out a completely random piece
-    this.listOfNextPieces = [];
 }
 
 // generates one of each piece in a random order
-Piece.prototype.generateStartingPieces = function()
+function generateStartingPieces()
 {
+  var nums = [0, 1, 2, 3, 4, 5, 6];
 
+  // loops 7 - 1
+  for(let i = nums.length - 1; i >= 0; --i)
+  {
+    let j = 0;
+    // random index from 0 - 6 initially, then decrements from there
+    j = Math.floor(Math.random() * (i + 1));
+    listOfNextPieces.push(new Piece(PIECES[nums[j]][0], PIECES[nums[j]][1]));
+
+    // removes the jth item from the list
+    nums.splice(j, 1);
+  }
 }
 
 // fills the board based on the 2d array of the Piece
@@ -173,8 +184,10 @@ Piece.prototype.moveDown = function()
     // if the lock time is longer than 0.5s then the piece gets locked
     if((Date.now() - lockTime) >= 500)
     {
+      // locks the color and the cells into the board
       this.lock();
-      // piece = getNextPiece();
+      // gets the next piece to be dropped
+      this.getNextPiece();
     }
   }
 }
@@ -186,6 +199,20 @@ Piece.prototype.moveLeft = function()
   {
     this.unDraw();
     this.x--;
+    this.draw();
+    // resets the lock time
+    lockTime = Date.now();
+  }
+}
+
+// only have the ability to rotate clockwise
+Piece.prototype.rotate = function()
+{
+
+  if(!this.collision(0, 0, this.tetromino[(this.tetrominoN + 1) % 4]))
+  {
+    this.unDraw();
+    this.activeTetromino = this.tetromino[(++this.tetrominoN) % 4];
     this.draw();
     // resets the lock time
     lockTime = Date.now();
@@ -211,18 +238,23 @@ document.addEventListener("keydown", CONTROL);
 
 function CONTROL(event)
 {
+    // to get the keycodes of keys go to, https://keycode.info
+    // if the left button was pressed
     if(event.keyCode == 37)
     {
         piece.moveLeft();
     }
-    else if(event.keyCode == 38)
+    // space
+    else if(event.keyCode == 32)
     {
-        // piece.rotate();
+        piece.rotate();
     }
+    // right
     else if(event.keyCode == 39)
     {
         piece.moveRight();
     }
+    // down
     else if(event.keyCode == 40)
     {
         piece.moveDown();
@@ -357,7 +389,7 @@ Piece.prototype.lock = function()
 
  // updates the board
  drawBoard();
- 
+
  // console.log(board);
  // console.log(score);
 
@@ -367,7 +399,14 @@ Piece.prototype.lock = function()
 
 Piece.prototype.getNextPiece = function()
 {
+  // remove the first element of the array and returns it to be stored in piece
+  piece = listOfNextPieces.shift();
 
+  // generates a random number 0 - 6
+  randomNum = Math.floor(Math.random() * PIECES.length)
+  // adds a piece to replace the one that was taken
+  listOfNextPieces.push(new Piece(PIECES[randomNum][0], PIECES[randomNum][1]));
+  console.log(listOfNextPieces);
 }
 
 // draws the board and the boarder around it
@@ -375,8 +414,9 @@ drawBoard();
 drawBoarder();
 
 // the current tetris piece in use
-var piece = new Piece(PIECES[0][0], PIECES[0][1]);
+var piece = new Piece(PIECES[0][0], PIECES[0][1]);;
+generateStartingPieces();
+piece.getNextPiece();
 
-// testing code
-piece.fill(piece.color);
+
 drop();
