@@ -25,13 +25,13 @@ for(i = 0; i < ROW; ++i)
 
 // all the different pieces and associates them to a color
 const PIECES = [
-    [Z,"RED"],
-    [S,"GREEN"],
+    [Z, "RED"],
+    [S, "GREEN"],
     [T, "PURPLE"],
-    [O,"YELLOW"],
-    [L,"BLUE"],
-    [I,"CYAN"],
-    [J,"ORANGE"]
+    [O, "YELLOW"],
+    [L, "ORANGE"],
+    [I, "CYAN"],
+    [J, "BLUE"]
 ];
 
 var listOfNextPieces = [];
@@ -45,18 +45,10 @@ var lockTime = Date.now();
 
 // the differenet drop speeds through out the game
 const initialDropSpeed = 1000;
-const dropSpeed2 = 750;
-const dropSpeed3 = 500;
-const dropSpeed4 = 250;
-const dropSpeed5 = 150;
 var dropSpeed = initialDropSpeed;
 
 // shift aount for trying new rotation
 var shiftAmount = 0;
-// which function called collisionDirection
-var rotateCall = "NONE";
-// for determining which way we can possibly wall kick
-var collisionDirection = "NONE";
 
 // draws a boarder around the canvas
 function drawBoarder()
@@ -213,7 +205,6 @@ Piece.prototype.moveLeft = function()
 // only have the ability to rotate clockwise
 Piece.prototype.rotate = function()
 {
-  rotateCall = "CLOCK";
   if(!this.collision(0, 0, this.tetromino[(this.tetrominoN + 1) % 4]))
   {
 
@@ -239,7 +230,6 @@ Piece.prototype.rotate = function()
 // only have the ability to rotate clockwise
 Piece.prototype.counterRotate = function()
 {
-  rotateCall = "COUNTER";
   if(!this.collision(0, 0, this.tetromino[(this.tetrominoN + 3) % 4]))
   {
 
@@ -349,43 +339,8 @@ Piece.prototype.collision = function(offsetX, offsetY, pieceType)
       let newY = this.y + i + offsetY;
 
       // checks if it will collide with the wall
-      if(newX >= COLUMN)
+      if(newX >= COLUMN || newX < 0 || newY >= ROW)
       {
-        console.log("VALUE of i: " + i);
-        console.log("value of j: " + j);
-
-        console.log("value of X: " + this.x);
-        console.log("value of offsetX: " + offsetX);
-        alert("pause");
-
-        shiftAmount = -1;
-        this.calcShiftAmount(newX, this.x, pieceType);
-        return true;
-      }
-      else if(newX < 0)
-      {
-        console.log("VALUE of i: " + i);
-        console.log("value of j: " + j);
-
-        console.log("value of X: " + this.x);
-        console.log("value of offsetX: " + offsetX);
-        alert("pause");
-
-        console.log("newX<0");
-        shiftAmount = 1;
-        this.calcShiftAmount(newX, this.x, pieceType);
-        return true;
-      }
-      else if(newY >= ROW)
-      {
-        console.log("VALUE of i: " + i);
-        console.log("value of j: " + j);
-
-        console.log("value of X: " + this.x);
-        console.log("value of offsetX: " + offsetX);
-        alert("pause");
-
-        shiftAmount = 0;
         this.calcShiftAmount(newX, this.x, pieceType);
         return true;
       }
@@ -400,14 +355,6 @@ Piece.prototype.collision = function(offsetX, offsetY, pieceType)
       // checks if there new new spot is not empty
       if( board[newY][newX] != EMPTY)
       {
-        console.log("VALUE of i: " + i);
-        console.log("value of j: " + j);
-        
-        console.log("value of X: " + this.x);
-        console.log("value of offsetX: " + offsetX);
-        alert("pause");
-
-        console.log("IT MADE IT HERER!!!!!");
         this.calcShiftAmount(newX, this.x, pieceType);
         return true;
       }
@@ -417,31 +364,26 @@ Piece.prototype.collision = function(offsetX, offsetY, pieceType)
   return false;
 }
 
+// calculates how much a piece needs to shift to possibly rotate
 Piece.prototype.calcShiftAmount = function(newX, originalX, pieceType)
 {
-
   // collision on the right
-  console.log("newX - OGX= " + (newX - originalX));
   if(newX - originalX > 0)
   {
     shiftAmount = -1;
     if(this.color == "CYAN" && (this.tetrominoN == 3))
     {
-      console.log("pieceType.color == CYAN && (pieceType.tetrominoN == 3)");
       shiftAmount = -2;
     }
   }
-  else if(newX - originalX < 0)
+  else if((newX - originalX < 0) || (newX - Math.abs(originalX) < 0))
   {
     shiftAmount = 1;
-    console.log("less than 0")
     if(this.color == "CYAN" && (this.tetrominoN == 1))
     {
-      console.log("pieceType.color == CYAN && (pieceType.tetrominoN == 1)");
       shiftAmount = 2;
     }
   }
-  console.log("shift amount: " + shiftAmount);
 }
 
 // drops the current piece at the current speed of the game
@@ -462,6 +404,7 @@ function drop()
  }
 }
 
+// locks the piece to the board, clears rows and calculates the score and speed of the game
 Piece.prototype.lock = function()
 {
   for(let i = 0; i < this.activeTetromino.length; ++i)
@@ -525,6 +468,12 @@ Piece.prototype.lock = function()
          }
          // increment the score
          score += 10;
+
+         if(score % 50 == 0)
+         {
+           dropSpeed *= 0.80;
+         }
+         console.log(dropSpeed);
      }
  }
 

@@ -10,3 +10,62 @@ body {
 canvas {
   background-color: white;
 }
+
+#main {
+  display: inline-block;
+}
+
+#leftColumn {
+  display: inline-block;
+  vertical-align:top;
+  padding: 5px;
+  font-size: 20px;
+}
+
+#hold {
+  display: inline-block;
+  vertical-align:top;
+  padding: 5px;
+  font-size: 20px;
+  border: 1px black solid;
+}
+
+#holdPiece {
+  display: inline-block;
+  vertical-align:top;
+  padding: 5px;
+}
+
+#tetrisBoard {
+  display: inline-block;
+  padding: 5px;
+}
+
+#rightColumn {
+  display: inline-block;
+  vertical-align:top;
+  padding: 5px;
+  font-size: 20px;
+}
+
+#nextPieces {
+  display: inline-block;
+  vertical-align:top;
+  padding: 5px;
+  border: 1px black solid;
+}
+
+#scoreDiv {
+  display: inline-block;
+  vertical-align:top;
+  padding: 5px;
+  border: 1px black solid;
+}
+
+#score {
+  display: inline-block;
+  vertical-align:top;
+  padding: 5px;
+  font-size: 40px;
+  font-weight: bold;
+}

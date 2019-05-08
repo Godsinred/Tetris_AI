@@ -9,12 +9,28 @@
 <body>
   <h1>Tetris</h1>
 
-  <canvas id="tetrisBoard" width="500" height="1000"></canvas>
+  <div id="main">
+    <div id="leftColumn">
+      <div id="hold">Hold<br>
+        <img src="assets/tetrominos_img/tetromino_image.png" id="holdPiece"/>
+      </div>
+    </div>
 
-  <div>
-      Score : <div id="score">0</div>
+    <canvas id="tetrisBoard" width="500" height="1000"></canvas>
+
+    <div id="rightColumn">
+      <div id="nextPieces">
+        <p>Next Pieces</p><br>
+        <img src="assets/tetrominos_img/tetromino_image.png" id="nextPiece1"/>
+      </div
+
+      <div id="scoreDiv">
+          <p style="font-size:25px;">Score : </p><div id="score">0</div>
+      </div>
   </div>
 
+  <!-- The library for tensorflow -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js"></script>
   <script src="tetrominos.js"></script>
   <script src="tetris.js"></script>
 
