@@ -213,11 +213,22 @@ Piece.prototype.moveLeft = function()
 // only have the ability to rotate clockwise
 Piece.prototype.rotate = function()
 {
-  // rotateCall = "CLOCK";
+  rotateCall = "CLOCK";
   if(!this.collision(0, 0, this.tetromino[(this.tetrominoN + 1) % 4]))
   {
 
     this.unDraw();
+    this.tetrominoN = (++this.tetrominoN) % 4;
+    this.activeTetromino = this.tetromino[this.tetrominoN];
+    this.draw();
+    // resets the lock time
+    lockTime = Date.now();
+  }
+  // try new location with the shift amount from the previous function call
+  else if(!this.collision(shiftAmount, 0, this.tetromino[(this.tetrominoN + 1) % 4]))
+  {
+    this.unDraw();
+    this.x += shiftAmount;
     this.activeTetromino = this.tetromino[(++this.tetrominoN) % 4];
     this.draw();
     // resets the lock time
@@ -228,11 +239,22 @@ Piece.prototype.rotate = function()
 // only have the ability to rotate clockwise
 Piece.prototype.counterRotate = function()
 {
-  // rotateCall = "COUNTER";
+  rotateCall = "COUNTER";
   if(!this.collision(0, 0, this.tetromino[(this.tetrominoN + 3) % 4]))
   {
 
     this.unDraw();
+    this.tetrominoN = (this.tetrominoN + 3) % 4;
+    this.activeTetromino = this.tetromino[this.tetrominoN];
+    this.draw();
+    // resets the lock time
+    lockTime = Date.now();
+  }
+  // try new location with the shift amount from the previous function call
+  else if(!this.collision(shiftAmount, 0, this.tetromino[(this.tetrominoN + 3) % 4]))
+  {
+    this.unDraw();
+    this.x += shiftAmount;
     this.tetrominoN = (this.tetrominoN + 3) % 4;
     this.activeTetromino = this.tetromino[this.tetrominoN];
     this.draw();
@@ -312,8 +334,10 @@ Piece.prototype.collision = function(offsetX, offsetY, pieceType)
 {
   for(let i = 0; i < pieceType.length; ++i)
   {
+
     for(let j = 0; j < pieceType.length; ++j)
     {
+
       // if the piece is empty ( = 0) then we skip it cause it doesn't collide
       if(!pieceType[i][j])
       {
@@ -327,17 +351,42 @@ Piece.prototype.collision = function(offsetX, offsetY, pieceType)
       // checks if it will collide with the wall
       if(newX >= COLUMN)
       {
-        collisionDirection = "RIGHT";
+        console.log("VALUE of i: " + i);
+        console.log("value of j: " + j);
+
+        console.log("value of X: " + this.x);
+        console.log("value of offsetX: " + offsetX);
+        alert("pause");
+
+        shiftAmount = -1;
+        this.calcShiftAmount(newX, this.x, pieceType);
         return true;
       }
-      else if(newX < 0 || newY >= ROW)
+      else if(newX < 0)
       {
-        collisionDirection = "LEFT";
+        console.log("VALUE of i: " + i);
+        console.log("value of j: " + j);
+
+        console.log("value of X: " + this.x);
+        console.log("value of offsetX: " + offsetX);
+        alert("pause");
+
+        console.log("newX<0");
+        shiftAmount = 1;
+        this.calcShiftAmount(newX, this.x, pieceType);
         return true;
       }
       else if(newY >= ROW)
       {
-        collisionDirection = "BOTTOM";
+        console.log("VALUE of i: " + i);
+        console.log("value of j: " + j);
+
+        console.log("value of X: " + this.x);
+        console.log("value of offsetX: " + offsetX);
+        alert("pause");
+
+        shiftAmount = 0;
+        this.calcShiftAmount(newX, this.x, pieceType);
         return true;
       }
 
@@ -351,24 +400,15 @@ Piece.prototype.collision = function(offsetX, offsetY, pieceType)
       // checks if there new new spot is not empty
       if( board[newY][newX] != EMPTY)
       {
-        // collision on the right
-        if(newX - this.x > 0)
-        {
-          shiftAmount = -1;
-        }
-        else if(newX - this.x < 0)
-        {
-          shiftAmount = 1;
+        console.log("VALUE of i: " + i);
+        console.log("value of j: " + j);
+        
+        console.log("value of X: " + this.x);
+        console.log("value of offsetX: " + offsetX);
+        alert("pause");
 
-        }
-        // if(rotateCall == "COUNTER")
-        // {
-        //   collisionDirection = "LEFT";
-        // }
-        // else if(rotateCall == "CLOCK")
-        // {
-        //   collisionDirection = "RIGHT";
-        // }
+        console.log("IT MADE IT HERER!!!!!");
+        this.calcShiftAmount(newX, this.x, pieceType);
         return true;
       }
     }
@@ -377,9 +417,31 @@ Piece.prototype.collision = function(offsetX, offsetY, pieceType)
   return false;
 }
 
-Piece.prototype.calcShiftAmount = function()
+Piece.prototype.calcShiftAmount = function(newX, originalX, pieceType)
 {
 
+  // collision on the right
+  console.log("newX - OGX= " + (newX - originalX));
+  if(newX - originalX > 0)
+  {
+    shiftAmount = -1;
+    if(this.color == "CYAN" && (this.tetrominoN == 3))
+    {
+      console.log("pieceType.color == CYAN && (pieceType.tetrominoN == 3)");
+      shiftAmount = -2;
+    }
+  }
+  else if(newX - originalX < 0)
+  {
+    shiftAmount = 1;
+    console.log("less than 0")
+    if(this.color == "CYAN" && (this.tetrominoN == 1))
+    {
+      console.log("pieceType.color == CYAN && (pieceType.tetrominoN == 1)");
+      shiftAmount = 2;
+    }
+  }
+  console.log("shift amount: " + shiftAmount);
 }
 
 // drops the current piece at the current speed of the game
