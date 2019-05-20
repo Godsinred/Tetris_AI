@@ -50,6 +50,10 @@ var dropSpeed = initialDropSpeed;
 // shift aount for trying new rotation
 var shiftAmount = 0;
 
+// this variable will hold the hold piece
+var holdPiece = 0;
+var holdColor;
+
 // draws a boarder around the canvas
 function drawBoarder()
 {
@@ -99,6 +103,11 @@ function drawBoard()
   }
 }
 
+function Game()
+{
+  
+}
+
 // input:
 //  tetromino = the type of tetris piece that is going to be generated
 //  color = the color of the piece
@@ -115,6 +124,9 @@ function Piece(tetromino, color)
     // the starting place of the tetris pieces
     this.x = 3;
     this.y = -2;
+
+    // a flag for determining if this piece was swapped
+    this.swapped = false;
 
 }
 
@@ -295,7 +307,8 @@ function CONTROL(event)
     // c
     else if(event.keyCode == 67)
     {
-        piece.rotate();
+        // piece.rotate();
+        piece.hold();
     }
     // x
     else if(event.keyCode == 88)
@@ -501,6 +514,27 @@ Piece.prototype.getNextPiece = function()
   listOfNextPieces.push(new Piece(PIECES[randomNum][0], PIECES[randomNum][1]));
   // console.log(listOfNextPieces);
 }
+
+Piece.prototype.hold = function()
+{
+  if(!this.swapped)
+  {
+    this.swapped = true;
+    holdPiece = this;
+    this.getNextPiece();
+
+    // before you progressing further rework the code with class Game
+    // this class will have everything so you the Piece class will be
+    // another class that will be another class for just piece stuff
+    // this way we can keep track of everything easier
+  }
+}
+
+function displaySettings()
+{
+  alert("Change Settings Button!");
+}
+
 
 // draws the board and the boarder around it
 drawBoard();

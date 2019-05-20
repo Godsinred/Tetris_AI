@@ -7,7 +7,11 @@
 </head>
 
 <body>
-  <h1>Tetris</h1>
+
+  <div id = "navbar">
+    <h1>Tetris</h1>
+    <button type="button" id="settingsButton" onclick="displaySettings()">Settings</button>
+  </div>
 
   <div id="main">
     <div id="leftColumn">
@@ -27,7 +31,9 @@
       <div id="scoreDiv">
           <p style="font-size:25px;">Score : </p><div id="score">0</div>
       </div>
+    </div>
   </div>
+
 
   <!-- The library for tensorflow -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js"></script>

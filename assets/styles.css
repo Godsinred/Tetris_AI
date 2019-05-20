@@ -11,6 +11,31 @@ canvas {
   background-color: white;
 }
 
+#navbar {
+  overflow: hidden;
+  display: block;
+  background: transparent;
+  text-align: center;
+  width: 100vw;
+}
+
+#navbar > h1 {
+  font-size: 50px;
+  width:fit-content;
+  display:inline-block;
+}
+
+#settingsButton {
+  display: inline-block;
+  float: right;
+  padding: 5px;
+  margin-top: 5px;
+  margin-right: 20px;
+  text-align: center;
+  /* makes the pointer into a hand to make it more button feely. yay ux/ui */
+  cursor: pointer;
+}
+
 #main {
   display: inline-block;
 }
