@@ -1,9 +1,3 @@
-// the canvas that is going to be drawn on the html canvas
-const canvas = document.getElementById("tetrisBoard");
-const context = canvas.getContext("2d");
-var scoreElement = document.getElementById("score");
-var score = 0;
-
 // The size of the convas that the tetris game is going to be played on
 const ROW = 20;
 const COLUMN = 10;
@@ -11,17 +5,6 @@ const SQ = 50;
 
 // The colors of the board and what they should be
 const EMPTY = "WHITE";
-// the board will also help us determine where pieces are already locked in place
-// so we don't move into them or outside the board
-var board = [];
-for(i = 0; i < ROW; ++i)
-{
-    board[i] = [];
-    for(j = 0; j < COLUMN; ++j)
-    {
-        board[i][j] = EMPTY;
-    }
-}
 
 // all the different pieces and associates them to a color
 const PIECES = [
@@ -34,104 +17,106 @@ const PIECES = [
     [J, "BLUE"]
 ];
 
-var listOfNextPieces = [];
+// this class holds the board and all the pieces so that the AI can see things easier
+function Game()
+{
+  // the canvas that is going to be drawn on the html canvas
+  this.canvas = document.getElementById("tetrisBoard");
+  this.context = canvas.getContext("2d");
+  this.scoreElement = document.getElementById("score");
+  this.score = 0;
 
-// the time since the last drop
-var dropTime = Date.now();
-// for determining if the game is over or not
-var gameOver = false;
-// time since last move so if the user doesn't move the piece in X time it will lock in place
-var lockTime = Date.now();
+  // the board will also help us determine where pieces are already locked in place
+  // so we don't move into them or outside the board
+  this.board = [];
+  for(i = 0; i < ROW; ++i)
+  {
+      this.board[i] = [];
+      for(j = 0; j < COLUMN; ++j)
+      {
+          this.board[i][j] = EMPTY;
+      }
+  }
 
-// the differenet drop speeds through out the game
-const initialDropSpeed = 1000;
-var dropSpeed = initialDropSpeed;
+  // the starting place of the tetris pieces
+  // these variables will hold the current coordinates of the tetromino
+  this.x = 3;
+  this.y = -2;
 
-// shift aount for trying new rotation
-var shiftAmount = 0;
+  // this will be the list of pieces that are next in queue
+  this.listOfNextPieces = [];
 
-// this variable will hold the hold piece
-var holdPiece = 0;
-var holdColor;
+  // the time since the last drop
+  this.dropTime = Date.now();
+  // for determining if the game is over or not
+  this.gameOver = false;
+  // time since last move so if the user doesn't move the piece in X time it will lock in place
+  this.lockTime = Date.now();
+
+  // the differenet drop speeds through out the game
+  this.dropSpeed = 1000;
+
+  // shift aount for trying new rotation
+  this.shiftAmount = 0;
+
+  // pointer to the hold piece
+  this.holdPiece = 0;
+  // pointer to the active piece
+  this.activePiece;
+}
 
 // draws a boarder around the canvas
-function drawBoarder()
+Game.prototype.drawBoarder = function()
 {
-  context.beginPath();
-  context.lineWidth = 2;
-  context.strokeStyle = "black";
+  this.context.beginPath();
+  this.context.lineWidth = 2;
+  this.context.strokeStyle = "black";
 
   // top boarder
-  context.moveTo(0, 0);
-  context.lineTo(500, 0);
+  this.context.moveTo(0, 0);
+  this.context.lineTo(500, 0);
 
   // right boarder
-  context.moveTo(500, 0);
-  context.lineTo(500, 1000);
+  this.context.moveTo(500, 0);
+  this.context.lineTo(500, 1000);
 
   // bottom boarder
-  context.moveTo(500, 1000);
-  context.lineTo(0, 1000);
+  this.context.moveTo(500, 1000);
+  this.context.lineTo(0, 1000);
 
   // left boarder
-  context.moveTo(0, 1000);
-  context.lineTo(0, 0);
-  context.stroke();
+  this.context.moveTo(0, 1000);
+  this.context.lineTo(0, 0);
+  this.context.stroke();
 
 
 }
 
 // draws a square
-function drawSquare(x, y, color)
+ Game.prototype.drawSquare = function(x, y, color)
 {
-    context.lineWidth = 2;
-    context.fillStyle = color;
-    context.fillRect(x*SQ,y*SQ,SQ,SQ);
+    this.context.lineWidth = 2;
+    this.context.fillStyle = color;
+    this.context.fillRect(x*SQ,y*SQ,SQ,SQ);
 
-    context.strokeStyle = "BLACK";
-    context.strokeRect(x*SQ,y*SQ,SQ,SQ);
+    this.context.strokeStyle = "BLACK";
+    this.context.strokeRect(x*SQ,y*SQ,SQ,SQ);
 }
 
 // draws the board
-function drawBoard()
+Game.prototype.drawBoard = function()
 {
-
-  for(let i = 0; i < ROW; ++i){
-      for(let j = 0; j < COLUMN; ++j){
-          drawSquare(j,i,board[i][j]);
+  for(let i = 0; i < ROW; ++i)
+  {
+      for(let j = 0; j < COLUMN; ++j)
+      {
+          this.drawSquare(j,i,this.board[i][j]);
       }
   }
 }
 
-function Game()
-{
-  
-}
-
-// input:
-//  tetromino = the type of tetris piece that is going to be generated
-//  color = the color of the piece
-function Piece(tetromino, color)
-{
-    // the type of piece and it associated color
-    this.tetromino = tetromino;
-    this.color = color;
-
-    // the default patter of every piece
-    this.tetrominoN = 0;
-    this.activeTetromino = this.tetromino[this.tetrominoN];
-
-    // the starting place of the tetris pieces
-    this.x = 3;
-    this.y = -2;
-
-    // a flag for determining if this piece was swapped
-    this.swapped = false;
-
-}
-
 // generates one of each piece in a random order
-function generateStartingPieces()
+Game.prototype.generateStartingPieces = function()
 {
   var nums = [0, 1, 2, 3, 4, 5, 6];
 
@@ -141,7 +126,7 @@ function generateStartingPieces()
     let j = 0;
     // random index from 0 - 6 initially, then decrements from there
     j = Math.floor(Math.random() * (i + 1));
-    listOfNextPieces.push(new Piece(PIECES[nums[j]][0], PIECES[nums[j]][1]));
+    this.listOfNextPieces.push(new Piece(PIECES[nums[j]][0], PIECES[nums[j]][1]));
 
     // removes the jth item from the list
     nums.splice(j, 1);
@@ -149,51 +134,98 @@ function generateStartingPieces()
 }
 
 // fills the board based on the 2d array of the Piece
-Piece.prototype.fill = function(color)
+// input:
+//  1) takes the Piece object to be filled
+Game.prototype.fill = function(color)
 {
-    for(let i = 0; i < this.activeTetromino.length; ++i)
+    for(let i = 0; i < this.activePiece.activeTetromino.length; ++i)
     {
-        for(let j = 0; j < this.activeTetromino.length; ++j)
+        for(let j = 0; j < this.activePiece.activeTetromino.length; ++j)
         {
             // we draw only occupied squares
-            if(this.activeTetromino[i][j])
+            if(this.activePiece.activeTetromino[i][j])
             {
-                drawSquare(this.x + j,this.y + i, color);
+                this.drawSquare(this.x + j,this.y + i, color);
             }
         }
     }
 }
 
 // draws the piece with its current values
-Piece.prototype.draw = function()
+Game.prototype.draw = function()
 {
-  this.fill(this.color);
+  this.fill(this.activePiece.color);
 }
 
-
 // removes the piece from the canvas with it current cordinates
-Piece.prototype.unDraw = function()
+Game.prototype.unDraw = function()
 {
   this.fill(EMPTY);
 }
 
+// this function helps us determine if the tetromino collides with the walls or
+// other pieces
+Game.prototype.collision = function(offsetX, offsetY, pieceType)
+{
+  for(i = 0; i < pieceType.length; ++i)
+  {
+
+    for(j = 0; j < pieceType.length; ++j)
+    {
+
+      // if the piece is empty ( = 0) then we skip it cause it doesn't collide
+      if(!pieceType[i][j])
+      {
+        continue;
+      }
+
+      // where the piece is going to be moving to
+      let newX = this.x + j + offsetX;
+      let newY = this.y + i + offsetY;
+
+      // checks if it will collide with the wall
+      if(newX >= COLUMN || newX < 0 || newY >= ROW)
+      {
+        this.calcShiftAmount(newX, this.x, pieceType);
+        return true;
+      }
+
+      // don't want to index negatively into an array
+      // use case: when the piece first spawns it is outside of the canvas
+      if(newY < 0)
+      {
+        continue;
+      }
+
+      // checks if there new new spot is not empty
+      if(this.board[newY][newX] != EMPTY)
+      {
+        this.calcShiftAmount(newX, this.x, pieceType);
+        return true;
+      }
+    }
+  }
+  // there was no collision
+  return false;
+}
+
 // moves the piece down if there is no collision
 // locks the piece if the last unsuccessful move was longer than (0.5seconds)
-Piece.prototype.moveDown = function()
+Game.prototype.moveDown = function()
 {
-  if(!this.collision(0, 1, this.activeTetromino))
+  if(!this.collision(0, 1, this.activePiece.activeTetromino))
   {
     this.unDraw();
     this.y++;
     this.draw();
     // resets the lock time
-    lockTime = Date.now();
+    this.lockTime = Date.now();
   }
   else
   {
     // this means it collided with something trying to move move down
     // if the lock time is longer than 0.5s then the piece gets locked
-    if((Date.now() - lockTime) >= 500)
+    if((Date.now() - this.lockTime) >= 500)
     {
       // locks the color and the cells into the board
       this.lock();
@@ -202,86 +234,86 @@ Piece.prototype.moveDown = function()
 }
 
 // moves the piece left if there is no collision
-Piece.prototype.moveLeft = function()
+Game.prototype.moveLeft = function()
 {
-  if(!this.collision(-1, 0, this.activeTetromino))
+  if(!this.collision(-1, 0, this.activePiece.activeTetromino))
   {
     this.unDraw();
     this.x--;
     this.draw();
     // resets the lock time
-    lockTime = Date.now();
+    this.lockTime = Date.now();
   }
 }
 
 // only have the ability to rotate clockwise
-Piece.prototype.rotate = function()
+Game.prototype.rotate = function()
 {
-  if(!this.collision(0, 0, this.tetromino[(this.tetrominoN + 1) % 4]))
+  if(!this.collision(0, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]))
   {
 
     this.unDraw();
-    this.tetrominoN = (++this.tetrominoN) % 4;
-    this.activeTetromino = this.tetromino[this.tetrominoN];
+    this.activePiece.tetrominoN = (++this.activePiece.tetrominoN) % 4;
+    this.activePiece.activeTetromino = this.activePiece.tetromino[this.activePiece.tetrominoN];
     this.draw();
     // resets the lock time
-    lockTime = Date.now();
+    this.lockTime = Date.now();
   }
   // try new location with the shift amount from the previous function call
-  else if(!this.collision(shiftAmount, 0, this.tetromino[(this.tetrominoN + 1) % 4]))
+  else if(!this.collision(this.shiftAmount, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]))
   {
     this.unDraw();
-    this.x += shiftAmount;
-    this.activeTetromino = this.tetromino[(++this.tetrominoN) % 4];
+    this.x += this.shiftAmount;
+    this.activePiece.activeTetromino = this.activePiece.tetromino[(++this.activePiece.tetrominoN) % 4];
     this.draw();
     // resets the lock time
-    lockTime = Date.now();
+    this.lockTime = Date.now();
   }
 }
 
 // only have the ability to rotate clockwise
-Piece.prototype.counterRotate = function()
+Game.prototype.counterRotate = function()
 {
-  if(!this.collision(0, 0, this.tetromino[(this.tetrominoN + 3) % 4]))
+  if(!this.collision(0, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 3) % 4]))
   {
 
     this.unDraw();
-    this.tetrominoN = (this.tetrominoN + 3) % 4;
-    this.activeTetromino = this.tetromino[this.tetrominoN];
+    this.activePiece.tetrominoN = (this.activePiece.tetrominoN + 3) % 4;
+    this.activePiece.activeTetromino = this.activePiece.tetromino[this.activePiece.tetrominoN];
     this.draw();
     // resets the lock time
-    lockTime = Date.now();
+    this.lockTime = Date.now();
   }
   // try new location with the shift amount from the previous function call
-  else if(!this.collision(shiftAmount, 0, this.tetromino[(this.tetrominoN + 3) % 4]))
+  else if(!this.collision(this.shiftAmount, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 3) % 4]))
   {
     this.unDraw();
-    this.x += shiftAmount;
-    this.tetrominoN = (this.tetrominoN + 3) % 4;
-    this.activeTetromino = this.tetromino[this.tetrominoN];
+    this.x += this.shiftAmount;
+    this.activePiece.tetrominoN = (this.activePiece.tetrominoN + 3) % 4;
+    this.activePiece.activeTetromino = this.activePiece.tetromino[this.activePiece.tetrominoN];
     this.draw();
     // resets the lock time
-    lockTime = Date.now();
+    this.lockTime = Date.now();
   }
 }
 
 // moves the piece right if there is no collision
-Piece.prototype.moveRight = function()
+Game.prototype.moveRight = function()
 {
-  if(!this.collision(1, 0, this.activeTetromino))
+  if(!this.collision(1, 0, this.activePiece.activeTetromino))
   {
     this.unDraw();
     this.x++;
     this.draw();
     // resets the lock time
-    lockTime = Date.now();
+    this.lockTime = Date.now();
   }
 }
 
 // hard drops the piece to the lowest row it can go and locks it in place
-Piece.prototype.hardDrop = function()
+Gamw.prototype.hardDrop = function()
 {
-  while(!this.collision(0, 1, this.activeTetromino))
+  while(!this.collision(0, 1, this.activePiece.activeTetromino))
   {
 
     this.y++;
@@ -291,6 +323,172 @@ Piece.prototype.hardDrop = function()
   this.draw();
   this.lock()
 }
+
+// not sure if i need/should put each class in its own file?
+// ====- GAME CLASS END ================================================================================================ CHECK!!
+
+// input:
+//  tetromino = the type of tetris piece that is going to be generated
+//  color = the color of the piece
+function Piece(tetromino, color)
+{
+    // the type of piece and it associated color (list of possible rotations)
+    this.tetromino = tetromino;
+    // the color of the piece
+    this.color = color;
+
+    // the default patter of every piece
+    this.tetrominoN = 0;
+    // the currently active pattern
+    this.activeTetromino = this.tetromino[this.tetrominoN];
+
+    // a flag for determining if this piece was swapped
+    this.swapped = false;
+}
+
+// fills the board based on the 2d array of the Piece   <------------------------------------------- has been changed to class Game
+// Piece.prototype.fill = function(color)
+// {
+//     for(let i = 0; i < this.activeTetromino.length; ++i)
+//     {
+//         for(let j = 0; j < this.activeTetromino.length; ++j)
+//         {
+//             // we draw only occupied squares
+//             if(this.activeTetromino[i][j])
+//             {
+//                 drawSquare(this.x + j,this.y + i, color);
+//             }
+//         }
+//     }
+// }
+//
+// // draws the piece with its current values
+// Piece.prototype.draw = function()
+// {
+//   this.fill(this.color);
+// }
+//
+//
+// // removes the piece from the canvas with it current cordinates
+// Piece.prototype.unDraw = function()
+// {
+//   this.fill(EMPTY);
+// }
+//
+// // moves the piece down if there is no collision
+// // locks the piece if the last unsuccessful move was longer than (0.5seconds)
+// Piece.prototype.moveDown = function()
+// {
+//   if(!this.collision(0, 1, this.activeTetromino))
+//   {
+//     this.unDraw();
+//     this.y++;
+//     this.draw();
+//     // resets the lock time
+//     lockTime = Date.now();
+//   }
+//   else
+//   {
+//     // this means it collided with something trying to move move down
+//     // if the lock time is longer than 0.5s then the piece gets locked
+//     if((Date.now() - lockTime) >= 500)
+//     {
+//       // locks the color and the cells into the board
+//       this.lock();
+//     }
+//   }
+// }
+//
+// // moves the piece left if there is no collision
+// Piece.prototype.moveLeft = function()
+// {
+//   if(!this.collision(-1, 0, this.activeTetromino))
+//   {
+//     this.unDraw();
+//     this.x--;
+//     this.draw();
+//     // resets the lock time
+//     lockTime = Date.now();
+//   }
+// }
+//
+// // only have the ability to rotate clockwise
+// Piece.prototype.rotate = function()
+// {
+//   if(!this.collision(0, 0, this.tetromino[(this.tetrominoN + 1) % 4]))
+//   {
+//
+//     this.unDraw();
+//     this.tetrominoN = (++this.tetrominoN) % 4;
+//     this.activeTetromino = this.tetromino[this.tetrominoN];
+//     this.draw();
+//     // resets the lock time
+//     lockTime = Date.now();
+//   }
+//   // try new location with the shift amount from the previous function call
+//   else if(!this.collision(shiftAmount, 0, this.tetromino[(this.tetrominoN + 1) % 4]))
+//   {
+//     this.unDraw();
+//     this.x += shiftAmount;
+//     this.activeTetromino = this.tetromino[(++this.tetrominoN) % 4];
+//     this.draw();
+//     // resets the lock time
+//     lockTime = Date.now();
+//   }
+// }
+//
+// // only have the ability to rotate clockwise
+// Piece.prototype.counterRotate = function()
+// {
+//   if(!this.collision(0, 0, this.tetromino[(this.tetrominoN + 3) % 4]))
+//   {
+//
+//     this.unDraw();
+//     this.tetrominoN = (this.tetrominoN + 3) % 4;
+//     this.activeTetromino = this.tetromino[this.tetrominoN];
+//     this.draw();
+//     // resets the lock time
+//     lockTime = Date.now();
+//   }
+//   // try new location with the shift amount from the previous function call
+//   else if(!this.collision(shiftAmount, 0, this.tetromino[(this.tetrominoN + 3) % 4]))
+//   {
+//     this.unDraw();
+//     this.x += shiftAmount;
+//     this.tetrominoN = (this.tetrominoN + 3) % 4;
+//     this.activeTetromino = this.tetromino[this.tetrominoN];
+//     this.draw();
+//     // resets the lock time
+//     lockTime = Date.now();
+//   }
+// }
+//
+// // moves the piece right if there is no collision
+// Piece.prototype.moveRight = function()
+// {
+//   if(!this.collision(1, 0, this.activeTetromino))
+//   {
+//     this.unDraw();
+//     this.x++;
+//     this.draw();
+//     // resets the lock time
+//     lockTime = Date.now();
+//   }
+// }
+//
+// // hard drops the piece to the lowest row it can go and locks it in place
+// Piece.prototype.hardDrop = function()
+// {
+//   while(!this.collision(0, 1, this.activeTetromino))
+//   {
+//
+//     this.y++;
+//
+//   }
+//   this.unDraw();
+//   this.draw();
+//   this.lock()
+// }
 
 // listens for keyboard input and based on the inputs code it does moves the piece
 // accordingly
@@ -331,51 +529,51 @@ function CONTROL(event)
     }
 }
 
-// this function helps us determine if the tetromino collides with the walls or
-// other pieces
-Piece.prototype.collision = function(offsetX, offsetY, pieceType)
-{
-  for(let i = 0; i < pieceType.length; ++i)
-  {
-
-    for(let j = 0; j < pieceType.length; ++j)
-    {
-
-      // if the piece is empty ( = 0) then we skip it cause it doesn't collide
-      if(!pieceType[i][j])
-      {
-        continue;
-      }
-
-      // where the piece is going to be moving to
-      let newX = this.x + j + offsetX;
-      let newY = this.y + i + offsetY;
-
-      // checks if it will collide with the wall
-      if(newX >= COLUMN || newX < 0 || newY >= ROW)
-      {
-        this.calcShiftAmount(newX, this.x, pieceType);
-        return true;
-      }
-
-      // don't want to index negatively into an array
-      // use case: when the piece first spawns it is outside of the canvas
-      if(newY < 0)
-      {
-        continue;
-      }
-
-      // checks if there new new spot is not empty
-      if( board[newY][newX] != EMPTY)
-      {
-        this.calcShiftAmount(newX, this.x, pieceType);
-        return true;
-      }
-    }
-  }
-  // there was no collision
-  return false;
-}
+// // this function helps us determine if the tetromino collides with the walls or
+// // other pieces
+// Piece.prototype.collision = function(offsetX, offsetY, pieceType)
+// {
+//   for(let i = 0; i < pieceType.length; ++i)
+//   {
+//
+//     for(let j = 0; j < pieceType.length; ++j)
+//     {
+//
+//       // if the piece is empty ( = 0) then we skip it cause it doesn't collide
+//       if(!pieceType[i][j])
+//       {
+//         continue;
+//       }
+//
+//       // where the piece is going to be moving to
+//       let newX = this.x + j + offsetX;
+//       let newY = this.y + i + offsetY;
+//
+//       // checks if it will collide with the wall
+//       if(newX >= COLUMN || newX < 0 || newY >= ROW)
+//       {
+//         this.calcShiftAmount(newX, this.x, pieceType);
+//         return true;
+//       }
+//
+//       // don't want to index negatively into an array
+//       // use case: when the piece first spawns it is outside of the canvas
+//       if(newY < 0)
+//       {
+//         continue;
+//       }
+//
+//       // checks if there new new spot is not empty
+//       if( board[newY][newX] != EMPTY)
+//       {
+//         this.calcShiftAmount(newX, this.x, pieceType);
+//         return true;
+//       }
+//     }
+//   }
+//   // there was no collision
+//   return false;
+// }
 
 // calculates how much a piece needs to shift to possibly rotate
 Piece.prototype.calcShiftAmount = function(newX, originalX, pieceType)
