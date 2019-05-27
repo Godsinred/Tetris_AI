@@ -325,104 +325,6 @@ Game.prototype.hardDrop = function()
   this.lock();
 }
 
-// not sure if i need/should put each class in its own file?
-// ====- GAME CLASS END ================================================================================================ CHECK!!
-
-// input:
-//  tetromino = the type of tetris piece that is going to be generated
-//  color = the color of the piece
-function Piece(tetromino, color)
-{
-    // the type of piece and it associated color (list of possible rotations)
-    this.tetromino = tetromino;
-    // the color of the piece
-    this.color = color;
-
-    // the default patter of every piece
-    this.tetrominoN = 0;
-    // the currently active pattern
-    this.activeTetromino = this.tetromino[this.tetrominoN];
-}
-
-// listens for keyboard input and based on the inputs code it does moves the piece
-// accordingly
-document.addEventListener("keydown", CONTROL);
-
-function CONTROL(event)
-{
-    // to get the keycodes of keys go to, https://keycode.info
-    // if the left button was pressed
-    if(event.keyCode == 37)
-    {
-        game.moveLeft();
-    }
-    // c
-    else if(event.keyCode == 67)
-    {
-        // piece.rotate();
-        game.hold();
-    }
-    // x
-    else if(event.keyCode == 88)
-    {
-        game.counterRotate();
-    }
-    // right
-    else if(event.keyCode == 39)
-    {
-        game.moveRight();
-    }
-    // down
-    else if(event.keyCode == 40)
-    {
-        game.moveDown();
-    }
-    else if(event.keyCode == 38)
-    {
-        game.hardDrop();
-    }
-}
-
-// calculates how much a piece needs to shift to possibly rotate
-Piece.prototype.calcShiftAmount = function(newX, originalX, pieceType)
-{
-  // collision on the right
-  if(newX - originalX > 0)
-  {
-    shiftAmount = -1;
-    if(this.color == "CYAN" && (this.tetrominoN == 3))
-    {
-      shiftAmount = -2;
-    }
-  }
-  else if((newX - originalX < 0) || (newX - Math.abs(originalX) < 0))
-  {
-    shiftAmount = 1;
-    if(this.color == "CYAN" && (this.tetrominoN == 1))
-    {
-      shiftAmount = 2;
-    }
-  }
-}
-
-// drops the current piece at the current speed of the game
-function drop()
-{
-  let currentTime = Date.now();
-
-  // drops the piece if enough time has elapsed
-  if((currentTime - game.dropTime) > game.dropSpeed)
-  {
-    game.moveDown();
-    game.dropTime = Date.now();
-  }
-  // when the browser has time it will call this function again
-  if(!game.gameOver)
-  {
-     requestAnimationFrame(drop);
-  }
-}
-
 // locks the piece to the board, clears rows and calculates the score and speed of the game
 Game.prototype.lock = function()
 {
@@ -526,6 +428,17 @@ Game.prototype.getNextPiece = function()
   // adds a piece to replace the one that was taken
   this.listOfNextPieces.push(new Piece(PIECES[randomNum][0], PIECES[randomNum][1]));
   // console.log(listOfNextPieces);
+
+  this.updateNextPiecesPNG();
+}
+
+Game.prototype.updateNextPiecesPNG = function()
+{
+  for(let i = 0; i < this.listOfNextPieces.length; ++i)
+  {
+    let tempID = document.getElementById("nextPiece" + i);
+    this.updatePNG(tempID, this.listOfNextPieces[i].color);
+  }
 }
 
 // swaps out the current piece for another piece
@@ -547,7 +460,7 @@ Game.prototype.hold = function()
 
     this.draw();
 
-    this.updateHoldPNG();
+    this.updatePNG(this.holdPNG, this.holdPiece.color);
   }
   // can only swap once before
   else if(!this.swapped)
@@ -568,40 +481,110 @@ Game.prototype.hold = function()
 
     this.draw();
 
-    this.updateHoldPNG();
+    this.updatePNG(this.holdPNG, this.holdPiece.color);
   }
 }
 
-Game.prototype.updateHoldPNG = function ()
+Game.prototype.updatePNG = function (place, color)
 {
-  // changes the hold image of the piece being held
-  if(this.holdPiece.color === "CYAN")
+  place.src = "assets/tetrominos_img/" + color + ".png";
+}
+
+// not sure if i need/should put each class in its own file?
+// ====- GAME CLASS END ================================================================================================ CHECK!!
+
+// input:
+//  tetromino = the type of tetris piece that is going to be generated
+//  color = the color of the piece
+function Piece(tetromino, color)
+{
+    // the type of piece and it associated color (list of possible rotations)
+    this.tetromino = tetromino;
+    // the color of the piece
+    this.color = color;
+
+    // the default patter of every piece
+    this.tetrominoN = 0;
+    // the currently active pattern
+    this.activeTetromino = this.tetromino[this.tetrominoN];
+}
+
+// listens for keyboard input and based on the inputs code it does moves the piece
+// accordingly
+document.addEventListener("keydown", CONTROL);
+
+function CONTROL(event)
+{
+    // to get the keycodes of keys go to, https://keycode.info
+    // if the left button was pressed
+    if(event.keyCode == 37)
+    {
+        game.moveLeft();
+    }
+    // c
+    else if(event.keyCode == 67)
+    {
+        // piece.rotate();
+        game.hold();
+    }
+    // x
+    else if(event.keyCode == 88)
+    {
+        game.counterRotate();
+    }
+    // right
+    else if(event.keyCode == 39)
+    {
+        game.moveRight();
+    }
+    // down
+    else if(event.keyCode == 40)
+    {
+        game.moveDown();
+    }
+    else if(event.keyCode == 38)
+    {
+        game.hardDrop();
+    }
+}
+
+// calculates how much a piece needs to shift to possibly rotate
+Piece.prototype.calcShiftAmount = function(newX, originalX, pieceType)
+{
+  // collision on the right
+  if(newX - originalX > 0)
   {
-    this.holdPNG.src = "assets/tetrominos_img/cyan.png";
+    shiftAmount = -1;
+    if(this.color == "CYAN" && (this.tetrominoN == 3))
+    {
+      shiftAmount = -2;
+    }
   }
-  else if(this.holdPiece.color === "GREEN")
+  else if((newX - originalX < 0) || (newX - Math.abs(originalX) < 0))
   {
-    this.holdPNG.src = "assets/tetrominos_img/green.png";
+    shiftAmount = 1;
+    if(this.color == "CYAN" && (this.tetrominoN == 1))
+    {
+      shiftAmount = 2;
+    }
   }
-  else if(this.holdPiece.color === "PURPLE")
+}
+
+// drops the current piece at the current speed of the game
+function drop()
+{
+  let currentTime = Date.now();
+
+  // drops the piece if enough time has elapsed
+  if((currentTime - game.dropTime) > game.dropSpeed)
   {
-    this.holdPNG.src = "assets/tetrominos_img/purple.png";
+    game.moveDown();
+    game.dropTime = Date.now();
   }
-  else if(this.holdPiece.color === "YELLOW")
+  // when the browser has time it will call this function again
+  if(!game.gameOver)
   {
-    this.holdPNG.src = "assets/tetrominos_img/yellow.png";
-  }
-  else if(this.holdPiece.color === "ORANGE")
-  {
-    this.holdPNG.src = "assets/tetrominos_img/orange.png";
-  }
-  else if(this.holdPiece.color === "RED")
-  {
-    this.holdPNG.src = "assets/tetrominos_img/red.png";
-  }
-  else if(this.holdPiece.color === "BLUE")
-  {
-    this.holdPNG.src = "assets/tetrominos_img/blue.png";
+     requestAnimationFrame(drop);
   }
 }
 
