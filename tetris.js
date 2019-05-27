@@ -22,7 +22,7 @@ function Game()
 {
   // the canvas that is going to be drawn on the html canvas
   this.canvas = document.getElementById("tetrisBoard");
-  this.context = canvas.getContext("2d");
+  this.context = this.canvas.getContext("2d");
   this.scoreElement = document.getElementById("score");
   this.score = 0;
 
@@ -63,6 +63,9 @@ function Game()
   this.holdPiece = 0;
   // pointer to the active piece
   this.activePiece;
+
+  // a flag for determining if this piece was swapped
+  this.swapped = false;
 }
 
 // draws a boarder around the canvas
@@ -186,7 +189,7 @@ Game.prototype.collision = function(offsetX, offsetY, pieceType)
       // checks if it will collide with the wall
       if(newX >= COLUMN || newX < 0 || newY >= ROW)
       {
-        this.calcShiftAmount(newX, this.x, pieceType);
+        this.activePiece.calcShiftAmount(newX, this.x, pieceType);
         return true;
       }
 
@@ -200,7 +203,7 @@ Game.prototype.collision = function(offsetX, offsetY, pieceType)
       // checks if there new new spot is not empty
       if(this.board[newY][newX] != EMPTY)
       {
-        this.calcShiftAmount(newX, this.x, pieceType);
+        this.activePiece.calcShiftAmount(newX, this.x, pieceType);
         return true;
       }
     }
@@ -311,7 +314,7 @@ Game.prototype.moveRight = function()
 }
 
 // hard drops the piece to the lowest row it can go and locks it in place
-Gamw.prototype.hardDrop = function()
+Game.prototype.hardDrop = function()
 {
   while(!this.collision(0, 1, this.activePiece.activeTetromino))
   {
@@ -321,7 +324,7 @@ Gamw.prototype.hardDrop = function()
   }
   this.unDraw();
   this.draw();
-  this.lock()
+  this.lock();
 }
 
 // not sure if i need/should put each class in its own file?
@@ -342,8 +345,6 @@ function Piece(tetromino, color)
     // the currently active pattern
     this.activeTetromino = this.tetromino[this.tetrominoN];
 
-    // a flag for determining if this piece was swapped
-    this.swapped = false;
 }
 
 // fills the board based on the 2d array of the Piece   <------------------------------------------- has been changed to class Game
@@ -500,32 +501,32 @@ function CONTROL(event)
     // if the left button was pressed
     if(event.keyCode == 37)
     {
-        piece.moveLeft();
+        game.moveLeft();
     }
     // c
     else if(event.keyCode == 67)
     {
         // piece.rotate();
-        piece.hold();
+        game.hold();
     }
     // x
     else if(event.keyCode == 88)
     {
-        piece.counterRotate();
+        game.counterRotate();
     }
     // right
     else if(event.keyCode == 39)
     {
-        piece.moveRight();
+        game.moveRight();
     }
     // down
     else if(event.keyCode == 40)
     {
-        piece.moveDown();
+        game.moveDown();
     }
     else if(event.keyCode == 38)
     {
-        piece.hardDrop();
+        game.hardDrop();
     }
 }
 
@@ -598,32 +599,32 @@ Piece.prototype.calcShiftAmount = function(newX, originalX, pieceType)
 }
 
 // drops the current piece at the current speed of the game
-function drop()
+Game.prototype.drop = function()
 {
   let currentTime = Date.now();
 
   // drops the piece if enough time has elapsed
-  if((currentTime - dropTime) > dropSpeed)
+  if((currentTime - this.dropTime) > this.dropSpeed)
   {
-    piece.moveDown();
-    dropTime = Date.now();
+    this.activePiece.moveDown();
+    this.dropTime = Date.now();
   }
   // when the browser has time it will call this function again
-  if( !gameOver)
+  if(!this.gameOver)
   {
-     requestAnimationFrame(drop);
- }
+     requestAnimationFrame(this.drop);
+  }
 }
 
 // locks the piece to the board, clears rows and calculates the score and speed of the game
-Piece.prototype.lock = function()
+Game.prototype.lock = function()
 {
-  for(let i = 0; i < this.activeTetromino.length; ++i)
+  for(let i = 0; i < this.activePiece.activeTetromino.length; ++i)
   {
-     for(let j = 0; j < this.activeTetromino.length; ++j)
+     for(let j = 0; j < this.activePiece.activeTetromino.length; ++j)
      {
          // ingore the empty/0 indexes
-         if( !this.activeTetromino[i][j])
+         if( !this.activePiece.activeTetromino[i][j])
          {
              continue;
          }
@@ -635,22 +636,22 @@ Piece.prototype.lock = function()
              alert("Game Over");
 
              // stop request animation frame
-             gameOver = true;
+             this.gameOver = true;
              break;
          }
 
          // we lock the piece
-         board[this.y + i][this.x + j] = this.color;
+        this.board[this.y + i][this.x + j] = this.activePiece.color;
      }
- }
+   }
 
- // removes full rows
- for(let i = 0; i < ROW; ++i)
- {
+   // removes full rows
+   for(let i = 0; i < ROW; ++i)
+   {
      let isRowFull = true;
      for(let j = 0; j < COLUMN; ++j)
      {
-         isRowFull = isRowFull && (board[i][j] != EMPTY);
+         isRowFull = isRowFull && (this.board[i][j] != EMPTY);
 
          // no need to continue if one of the rows is not full
          if(!isRowFull)
@@ -667,7 +668,7 @@ Piece.prototype.lock = function()
          {
              for(let j = 0; j < COLUMN; ++j)
              {
-                 board[y][j] = board[y - 1][j];
+                 this.board[y][j] = this.board[y - 1][j];
              }
          }
 
@@ -675,56 +676,88 @@ Piece.prototype.lock = function()
          // this might also change if the definition of game over changes
          for(let j = 0; j < COLUMN; ++j)
          {
-             board[0][j] = EMPTY;
+             this.board[0][j] = EMPTY;
          }
          // increment the score
-         score += 10;
+         this.score += 10;
 
-         if(score % 50 == 0)
+         if(this.score % 50 == 0)
          {
-           dropSpeed *= 0.80;
+           this.dropSpeed *= 0.80;
          }
-         console.log(dropSpeed);
+         console.log(this.dropSpeed);
      }
  }
 
  // updates the board
- drawBoard();
+ this.drawBoard();
 
  // console.log(board);
  // console.log(score);
 
  // updates the score
- scoreElement.innerHTML = score;
+ this.scoreElement.innerHTML = this.score;
 
  // gets the next piece to be dropped
  this.getNextPiece();
+
+ // resets to the default starting location of the next piece
+ this.x = 3;
+ this.y = -2;
+
+ // restarts if a piece was swapped
+ this.swapped = false;
 }
 
-Piece.prototype.getNextPiece = function()
+Game.prototype.getNextPiece = function()
 {
   // remove the first element of the array and returns it to be stored in piece
-  piece = listOfNextPieces.shift();
+  this.activePiece = this.listOfNextPieces.shift();
 
   // generates a random number 0 - 6
   randomNum = Math.floor(Math.random() * PIECES.length)
   // adds a piece to replace the one that was taken
-  listOfNextPieces.push(new Piece(PIECES[randomNum][0], PIECES[randomNum][1]));
+  this.listOfNextPieces.push(new Piece(PIECES[randomNum][0], PIECES[randomNum][1]));
   // console.log(listOfNextPieces);
 }
 
-Piece.prototype.hold = function()
+// swaps out the current piece for another piece
+Game.prototype.hold = function()
 {
-  if(!this.swapped)
+  // have this in case a piece has never been swapped and this.holdPiece is null (i.e. this case 0)
+  if(this.holdPiece === 0)
   {
+    this.unDraw();
+
+    // swaps out the current piece and grabs a new piece
     this.swapped = true;
-    holdPiece = this;
+    this.holdPiece = this.activePiece;
     this.getNextPiece();
 
-    // before you progressing further rework the code with class Game
-    // this class will have everything so you the Piece class will be
-    // another class that will be another class for just piece stuff
-    // this way we can keep track of everything easier
+    // resets to the default starting location of the swapped piece
+    this.x = 3;
+    this.y = -2;
+
+    this.draw();
+  }
+  // can only swap once before
+  else if(!this.swapped)
+  {
+    this.unDraw();
+
+    // resets the terominoN and tetromino as well as swapping the pieces
+    this.swapped = true;
+    let temp = this.holdPiece;
+    this.holdPiece = this.activePiece;
+    this.activePiece = temp;
+
+    this.activePiece.tetrominoN = 0;
+    this.activePiece.activeTetromino = this.activePiece.tetromino[this.activePiece.tetrominoN];
+    // resets to the default starting location of the swapped piece
+    this.x = 3;
+    this.y = -2;
+
+    this.draw();
   }
 }
 
@@ -733,15 +766,15 @@ function displaySettings()
   alert("Change Settings Button!");
 }
 
-
-// draws the board and the boarder around it
-drawBoard();
-drawBoarder();
+// main
 
 // the current tetris piece in use
-var piece = new Piece(PIECES[0][0], PIECES[0][1]);;
-generateStartingPieces();
-piece.getNextPiece();
+var game = new Game();
+// draws the board and the boarder around it
+game.drawBoard();
+game.drawBoarder();
+game.generateStartingPieces();
+game.getNextPiece();
 
 
-drop();
+game.drop();
