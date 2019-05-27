@@ -599,20 +599,20 @@ Piece.prototype.calcShiftAmount = function(newX, originalX, pieceType)
 }
 
 // drops the current piece at the current speed of the game
-Game.prototype.drop = function()
+function drop()
 {
   let currentTime = Date.now();
 
   // drops the piece if enough time has elapsed
-  if((currentTime - this.dropTime) > this.dropSpeed)
+  if((currentTime - game.dropTime) > game.dropSpeed)
   {
-    this.activePiece.moveDown();
-    this.dropTime = Date.now();
+    game.moveDown();
+    game.dropTime = Date.now();
   }
   // when the browser has time it will call this function again
-  if(!this.gameOver)
+  if(!game.gameOver)
   {
-     requestAnimationFrame(this.drop);
+     requestAnimationFrame(drop);
   }
 }
 
@@ -777,4 +777,4 @@ game.generateStartingPieces();
 game.getNextPiece();
 
 
-game.drop();
+drop();
