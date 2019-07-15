@@ -298,7 +298,7 @@ Game.prototype.moveLeft = function()
     this.lockTime = Date.now();
 
     // drops ghost piece
-    this.ghostDrop();
+    this.ghostDrop(true);
   }
 }
 
@@ -319,7 +319,7 @@ Game.prototype.rotate = function()
     this.ghostPiece.tetrominoN = (++this.ghostPiece.tetrominoN) % 4;
     this.ghostPiece.activeTetromino = this.ghostPiece.tetromino[this.ghostPiece.tetrominoN];
 
-    this.ghostDrop("rotate");
+    this.ghostDrop(false);
   }
   // try new location with the shift amount from the previous function call
   else if(!this.collision(this.shiftAmount, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]))
@@ -336,7 +336,7 @@ Game.prototype.rotate = function()
     this.ghostPiece.tetrominoN = (++this.ghostPiece.tetrominoN) % 4
     this.ghostPiece.activeTetromino = this.ghostPiece.tetromino[this.ghostPiece.tetrominoN];
 
-    this.ghostDrop("rotate");
+    this.ghostDrop(false);
   }
 }
 
@@ -358,7 +358,7 @@ Game.prototype.counterRotate = function()
     this.ghostPiece.tetrominoN = (this.ghostPiece.tetrominoN + 3) % 4;
     this.ghostPiece.activeTetromino = this.ghostPiece.tetromino[this.ghostPiece.tetrominoN];
 
-    this.ghostDrop("rotate");
+    this.ghostDrop(false);
   }
   // try new location with the shift amount from the previous function call
   else if(!this.collision(this.shiftAmount, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 3) % 4]))
@@ -376,7 +376,7 @@ Game.prototype.counterRotate = function()
     this.ghostPiece.tetrominoN = (this.ghostPiece.tetrominoN + 3) % 4;
     this.ghostPiece.activeTetromino = this.ghostPiece.tetromino[this.ghostPiece.tetrominoN];
 
-    this.ghostDrop("rotate");
+    this.ghostDrop(false);
   }
 }
 
@@ -393,7 +393,7 @@ Game.prototype.moveRight = function()
     this.lockTime = Date.now();
 
     // drops ghost piece
-    this.ghostDrop();
+    this.ghostDrop(true);
   }
 }
 
@@ -412,9 +412,9 @@ Game.prototype.hardDrop = function()
 }
 
 // drops ghost piece
-Game.prototype.ghostDrop = function(rotate)
+Game.prototype.ghostDrop = function(isUndraw)
 {
-  if(rotate != "rotate")
+  if(isUndraw)
   {
     this.unDraw("ghost");
   }
@@ -516,13 +516,15 @@ Game.prototype.lock = function()
  this.scoreElement.innerHTML = this.score;
 
  // gets the next piece to be dropped
+ delete this.activePiece;
+ delete this.ghostPiece;
  this.getNextPiece();
 
  // resets to the default starting location of the next piece
  this.x = 3;
  this.y = -2;
 
- this.ghostDrop();
+ this.ghostDrop(true);
 
  // restarts if a piece was swapped
  this.swapped = false;
@@ -591,8 +593,14 @@ Game.prototype.hold = function()
   // have this in case a piece has never been swapped and this.holdPiece is null (i.e. this case 0)
   if(this.holdPiece === 0)
   {
-    this.unDraw();
+    // removes the ghost pieces and updates it with the hold piece
+    // needs to be called before getNextPiece cause the call will get a new ghost piece and will
+    // disturb the deletion process
+    this.unDraw("ghost");
+    // deletes the object and frees up memory
+    delete this.ghostPiece;
 
+    this.unDraw();
     // swaps out the current piece and grabs a new piece
     this.swapped = true;
     this.holdPiece = this.activePiece;
@@ -604,14 +612,22 @@ Game.prototype.hold = function()
 
     this.draw();
 
-
     this.updatePNG(this.holdPNG, this.holdPiece.color);
+
+    // drops the ghost piece and prevents it from next piece dropping too far and being written into the other pieces
+    this.ghostDrop(false);
   }
   // can only swap once before
   else if(!this.swapped)
   {
-    this.unDraw();
+    // removes the ghost pieces and updates it with the hold piece
+    // needs to be called before getNextPiece cause the call will get a new ghost piece and will
+    // disturb the deletion process
+    this.unDraw("ghost");
+    // deletes the object and frees up memory
+    delete this.ghostPiece;
 
+    this.unDraw();
     // resets the terominoN and tetromino as well as swapping the pieces
     this.swapped = true;
     let temp = this.holdPiece;
@@ -627,6 +643,11 @@ Game.prototype.hold = function()
     this.draw();
 
     this.updatePNG(this.holdPNG, this.holdPiece.color);
+
+    // creates the new ghost pieces and drops it
+    this.ghostPiece = new Piece(this.activePiece.tetromino, this.getGhostColor(this.activePiece.color));
+    this.ghostDrop(false);
+    alert("end");
   }
 }
 
@@ -738,19 +759,19 @@ function displaySettings()
   alert("Change Settings Button!");
 }
 
-// main
-
-// the current tetris piece in use
-var game = new Game();
-// draws the board and the boarder around it
-game.drawBoard();
-game.drawBoarder();
-// creates the starting pieces for the game
-game.generateStartingPieces();
-// gets the first piece of the game
-game.getNextPiece();
-// so the first piece has a ghost piece before any input is received
-game.ghostDrop();
-
-// starts the dropping sequence
-drop();
+// // main
+//
+// // the current tetris piece in use
+// var game = new Game();
+// // draws the board and the boarder around it
+// game.drawBoard();
+// game.drawBoarder();
+// // creates the starting pieces for the game
+// game.generateStartingPieces();
+// // gets the first piece of the game
+// game.getNextPiece();
+// // so the first piece has a ghost piece before any input is received
+// game.ghostDrop();
+//
+// // starts the dropping sequence
+// drop();
