@@ -29,15 +29,7 @@ function Game()
 
   // the board will also help us determine where pieces are already locked in place
   // so we don't move into them or outside the board
-  this.board = [];
-  for(i = 0; i < ROW; ++i)
-  {
-      this.board[i] = [];
-      for(j = 0; j < COLUMN; ++j)
-      {
-          this.board[i][j] = EMPTY;
-      }
-  }
+  this.board = Array(ROW).fill().map(() => Array(COLUMN).fill(EMPTY));
 
   // the starting place of the tetris pieces
   // these variables will hold the current coordinates of the tetromino
@@ -150,7 +142,7 @@ Game.prototype.fill = function(color, ghost)
 {
     if(ghost === "ghost")
     {
-      console.log(this.ghostPiece.color);
+      // console.log(this.ghostPiece.color);
       var tetro = this.ghostPiece;
       var indexX = this.ghostX;
       var indexY = this.ghostY;
@@ -180,9 +172,9 @@ Game.prototype.draw = function(ghost)
 {
   if(ghost === "ghost")
   {
-    console.log("before draw ghost");
+    // console.log("before draw ghost");
     this.fill(this.ghostPiece.color, "ghost");
-    console.log("after draw ghost");
+    // console.log("after draw ghost");
   }
   else
   {
@@ -195,9 +187,9 @@ Game.prototype.unDraw = function(ghost)
 {
   if(ghost === "ghost")
   {
-    console.log("before undraw ghost");
+    // console.log("before undraw ghost");
     this.fill(EMPTY, "ghost");
-    console.log("after undraw ghost");
+    // console.log("after undraw ghost");
   }
   else
   {
@@ -450,11 +442,11 @@ Game.prototype.lock = function()
          // might change this later so that you lose if the whole piece gets locked above the screen
          if(this.y + i < 0)
          {
-             alert("Game Over");
+             alert("Game Over from tetris.js");
 
              // stop request animation frame
              this.gameOver = true;
-             break;
+             return;
          }
 
          // we lock the piece
@@ -481,7 +473,7 @@ Game.prototype.lock = function()
      {
          // if the row is full
          // we move down all the rows above it
-         for(let y = i; y > 1; y--)
+         for(let y = i; y > 0; y--)
          {
              for(let j = 0; j < COLUMN; ++j)
              {
@@ -647,7 +639,6 @@ Game.prototype.hold = function()
     // creates the new ghost pieces and drops it
     this.ghostPiece = new Piece(this.activePiece.tetromino, this.getGhostColor(this.activePiece.color));
     this.ghostDrop(false);
-    alert("end");
   }
 }
 
@@ -751,6 +742,12 @@ function drop()
   if(!game.gameOver)
   {
      requestAnimationFrame(drop);
+  }
+  else
+  {
+    delete game;
+    delete best;
+    console.log("DELETE GAME AND THEN BEST.GAME");
   }
 }
 
