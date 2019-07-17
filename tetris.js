@@ -258,7 +258,7 @@ Game.prototype.collision = function(offsetX, offsetY, pieceType, ghost)
 // locks the piece if the last unsuccessful move was longer than (0.5seconds)
 Game.prototype.moveDown = function()
 {
-  if(!this.collision(0, 1, this.activePiece.activeTetromino))
+  if(!this.collision(0, 1, this.activePiece.activeTetromino) && !this.gameOver)
   {
     this.unDraw();
     this.y++;
@@ -281,7 +281,7 @@ Game.prototype.moveDown = function()
 // moves the piece left if there is no collision
 Game.prototype.moveLeft = function()
 {
-  if(!this.collision(-1, 0, this.activePiece.activeTetromino))
+  if(!this.collision(-1, 0, this.activePiece.activeTetromino) && !this.gameOver)
   {
     this.unDraw();
     this.x--;
@@ -297,7 +297,7 @@ Game.prototype.moveLeft = function()
 // only have the ability to rotate clockwise
 Game.prototype.rotate = function()
 {
-  if(!this.collision(0, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]))
+  if(!this.collision(0, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]) && !this.gameOver)
   {
     this.unDraw();
     this.activePiece.tetrominoN = (++this.activePiece.tetrominoN) % 4;
@@ -314,7 +314,7 @@ Game.prototype.rotate = function()
     this.ghostDrop(false);
   }
   // try new location with the shift amount from the previous function call
-  else if(!this.collision(this.shiftAmount, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]))
+  else if(!this.collision(this.shiftAmount, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]) && !this.gameOver)
   {
     this.unDraw();
     this.x += this.shiftAmount;
@@ -335,7 +335,7 @@ Game.prototype.rotate = function()
 // only have the ability to rotate clockwise
 Game.prototype.counterRotate = function()
 {
-  if(!this.collision(0, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 3) % 4]))
+  if(!this.collision(0, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 3) % 4]) && !this.gameOver)
   {
 
     this.unDraw();
@@ -353,7 +353,7 @@ Game.prototype.counterRotate = function()
     this.ghostDrop(false);
   }
   // try new location with the shift amount from the previous function call
-  else if(!this.collision(this.shiftAmount, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 3) % 4]))
+  else if(!this.collision(this.shiftAmount, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 3) % 4]) && !this.gameOver)
   {
     this.unDraw();
     this.x += this.shiftAmount;
@@ -376,7 +376,7 @@ Game.prototype.counterRotate = function()
 Game.prototype.moveRight = function()
 {
   console.log("right");
-  if(!this.collision(1, 0, this.activePiece.activeTetromino))
+  if(!this.collision(1, 0, this.activePiece.activeTetromino) && !this.gameOver)
   {
     this.unDraw();
     this.x++;
@@ -392,7 +392,7 @@ Game.prototype.moveRight = function()
 // hard drops the piece to the lowest row it can go and locks it in place
 Game.prototype.hardDrop = function()
 {
-  while(!this.collision(0, 1, this.activePiece.activeTetromino))
+  while(!this.collision(0, 1, this.activePiece.activeTetromino) && !this.gameOver)
   {
     this.y++;
   }
@@ -430,7 +430,7 @@ Game.prototype.lock = function()
 
   for(let i = 0; i < this.activePiece.activeTetromino.length; ++i)
   {
-     for(let j = 0; j < this.activePiece.activeTetromino.length; ++j)
+     for(let j = 0; j < this.activePiece.activeTetromino.length && !this.gameOver; ++j)
      {
          // ingore the empty/0 indexes
          if( !this.activePiece.activeTetromino[i][j])
@@ -442,9 +442,6 @@ Game.prototype.lock = function()
          // might change this later so that you lose if the whole piece gets locked above the screen
          if(this.y + i < 0)
          {
-             alert("Game Over from tetris.js");
-
-             // stop request animation frame
              this.gameOver = true;
              return;
          }
@@ -748,6 +745,7 @@ function drop()
     delete game;
     delete best;
     console.log("DELETE GAME AND THEN BEST.GAME");
+    alert("Game Over from tetris.js");
   }
 }
 
@@ -755,6 +753,7 @@ function displaySettings()
 {
   alert("Change Settings Button!");
 }
+
 
 // // main
 //

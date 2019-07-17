@@ -182,7 +182,7 @@ BestFirstSearch.prototype.tempLock = function(tetromino, cur_matrix)
 {
     for(let i = 0; i < tetromino.length; ++i)
     {
-       for(let j = 0; j < tetromino.length; ++j)
+       for(let j = 0; j < tetromino.length && !this.gameDone; ++j)
        {
            // ingore the empty/0 indexes
            if( !tetromino[i][j])
@@ -195,8 +195,6 @@ BestFirstSearch.prototype.tempLock = function(tetromino, cur_matrix)
            if(this.y + i < 0)
            {
                alert("BFS Game Over");
-
-               // stop request animation frame
                this.gameDone = true;
                return;
            }
@@ -247,77 +245,6 @@ BestFirstSearch.prototype.tempLock = function(tetromino, cur_matrix)
    return cur_matrix;
 }
 
-// // moves the piece left if there is no collision
-// Game.prototype.moveLeft = function()
-// {
-//   if(!this.collision(-1, 0, this.activePiece.activeTetromino))
-//   {
-//     this.unDraw();
-//     this.x--;
-//     this.draw();
-//     // resets the lock time
-//     this.lockTime = Date.now();
-//
-//     // drops ghost piece
-//     this.ghostDrop(true);
-//   }
-// }
-//
-// // moves the piece right if there is no collision
-// Game.prototype.moveRight = function()
-// {
-//   console.log("right");
-//   if(!this.collision(1, 0, this.activePiece.activeTetromino))
-//   {
-//     this.unDraw();
-//     this.x++;
-//     this.draw();
-//     // resets the lock time
-//     this.lockTime = Date.now();
-//
-//     // drops ghost piece
-//     this.ghostDrop(true);
-//   }
-// }
-//
-// // only have the ability to rotate clockwise
-// Game.prototype.rotate = function()
-// {
-//   if(!this.collision(0, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]))
-//   {
-//     this.unDraw();
-//     this.activePiece.tetrominoN = (++this.activePiece.tetrominoN) % 4;
-//     this.activePiece.activeTetromino = this.activePiece.tetromino[this.activePiece.tetrominoN];
-//     this.draw();
-//     // resets the lock time
-//     this.lockTime = Date.now();
-//
-//     // drops ghost piece
-//     this.unDraw("ghost");
-//     this.ghostPiece.tetrominoN = (++this.ghostPiece.tetrominoN) % 4;
-//     this.ghostPiece.activeTetromino = this.ghostPiece.tetromino[this.ghostPiece.tetrominoN];
-//
-//     this.ghostDrop(false);
-//   }
-//   // try new location with the shift amount from the previous function call
-//   else if(!this.collision(this.shiftAmount, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]))
-//   {
-//     this.unDraw();
-//     this.x += this.shiftAmount;
-//     this.activePiece.activeTetromino = this.activePiece.tetromino[(++this.activePiece.tetrominoN) % 4];
-//     this.draw();
-//     // resets the lock time
-//     this.lockTime = Date.now();
-//
-//     // drops ghost piece
-//     this.unDraw("ghost");
-//     this.ghostPiece.tetrominoN = (++this.ghostPiece.tetrominoN) % 4
-//     this.ghostPiece.activeTetromino = this.ghostPiece.tetromino[this.ghostPiece.tetrominoN];
-//
-//     this.ghostDrop(false);
-//   }
-// }
-
 BestFirstSearch.prototype.updatePath = function(curState)
 {
   // for which rotation we are using
@@ -355,6 +282,11 @@ BestFirstSearch.prototype.movePiece = function()
       console.log("MOVING RIGHT");
       game.moveRight();
     }
+    else if (this.path[i] == "C")
+    {
+      console.log("ROTATING");
+      game.rotate();
+    }
     else if (this.path[i] == "D")
     {
       console.log("HARD DROP");
@@ -377,17 +309,20 @@ function copy(o) {
 
 // this class is similar to the Game class but it is going to have less member vairables
 // which will hopefully increase the speed and reduce memory
-function State(matrix, tetrominoN, curX, score)
+function State(matrix, tetrominoN, curX, scoreIncrease)
 {
   // the matrix that is our current state and will be evaluated
   // this is also going to be used to pass into the next state so we can build off of that
   this.matrix = matrix;
-
+  this.scoreIncrease = scoreIncrease;
   // this will let us know which rotation to use for the tetromino piece
   this.tetrominoN = tetrominoN;
   // the x value will determine if we move left and right and by how much
   this.x = curX;
 
+  // heuristic parameters to help evaluate the value
+  this.maxHeight = Array(COLUMN).fill(0);
+  this.colSum = Array(COLUMN).fill(0);
   // the best heuristic value we can get
   this.value = this.heuristic();
 }
@@ -395,24 +330,79 @@ function State(matrix, tetrominoN, curX, score)
 // evaluatse the value of the state and provides a hueristic value for it
 State.prototype.heuristic = function()
 {
-  let std_height = 0;
-  let gaps = 0;
-  let height = 0;
-  let scoreIncrease = 0;
+  this.getHeight();
 
-  for(i = 0; i< this.matrix.length; ++i)
+  var numGaps = this.getNumGaps();
+  var maxHeight = Math.max(...this.maxHeight);
+  var std_height = this.getStdHeight();
+
+  var scoreIncrease = this.scoreIncrease;
+
+  var si = 0;
+  if (scoreIncrease >= 40)
   {
-    for(j = 0; j < this.matrix.length; ++j)
+    si = 50;
+  }
+  else
+  {
+    si = 1;
+  }
+  if (numGaps > 0)
+  {
+    si = 10
+  }
+  console.log("heur items");
+  console.log(numGaps);
+  console.log(maxHeight);
+  console.log(std_height);
+  console.log(scoreIncrease);
+
+  let heur = -(numGaps * 100) - (maxHeight / 2) - (std_height * 4) + (scoreIncrease * si);
+  console.log(heur);
+  return heur;
+}
+
+// gets the sum of all the col and max heigh of the state
+State.prototype.getHeight = function()
+{
+  for(let i = 0; i < ROW; ++i)
+  {
+    for(let j = 0; j < COLUMN; ++j)
     {
-      if(this.matrix[i][j] == 1)
+      this.colSum[j] += this.matrix[i][j];
+      if(this.maxHeight[j] == 0 && this.matrix[i][j] == 1)
       {
-        return i - 19;
+        this.maxHeight[j] = ROW - i;
       }
     }
   }
-  return 0;
 }
+
+// gets the total number of gaps from the first occurence of a piece to the bottom
+State.prototype.getNumGaps = function()
+{
+  let gaps = 0;
+  for(let i = 0; i < COLUMN; ++i)
+  {
+    gaps += this.maxHeight[i] - this.colSum[i];
+  }
+  return gaps;
+}
+
+// finds the standard deviation of the state height
+State.prototype.getStdHeight = function()
+{
+  let standardDev = 0;
+  let average = this.colSum.reduce((a, b) => a + b, 0) / COLUMN;
+  for(let i = 0; i < COLUMN; ++i)
+  {
+    standardDev += Math.pow(this.colSum[i] - average, 2);
+  }
+
+  return standardDev / COLUMN;
+}
+
 
 var best = new BestFirstSearch();
 best.startAI();
-best.movePiece();
+console.log("END AI");
