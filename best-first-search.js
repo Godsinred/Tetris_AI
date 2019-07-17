@@ -19,7 +19,6 @@ function BestFirstSearch()
   this.score = 0
   // the best path that the ai can currently go to
   this.path = "";
-  this.h_n = -999999; // to represent a really small heuristic value
   // the matrix that will represent the current stte of the board
   // creates a 2d array of row and colum of 0s
   this.matrix = Array(ROW).fill().map(() => Array(COLUMN).fill(0));
@@ -34,35 +33,39 @@ function BestFirstSearch()
 // the main function of the AI that will loop until the game is over
 BestFirstSearch.prototype.startAI = function()
 {
-  while(!this.gameDone)
+  while(!this.gameDone && !game.gameOver)
+  // while(this.score <= 100)
   {
     // makes a list of the current available pieces to be passed into the heuristic functions
     // currently doing first 3 states since there are so many permutations
-    var tempArray = game.listOfNextPieces.slice(0,2);
+    var tempArray = game.listOfNextPieces.slice();
     tempArray.unshift(new Piece(game.activePiece.tetromino, game.activePiece.color));
 
-    // to see the pieces
-    // for(z = 0; z <tempArray.length; ++z){
-    //   console.log(tempArray[z]);
-    // }
-
-    // will iterate through the first 3 game pieces
-    for(let i = 0; i < 3; ++i)
+    this.score = game.score;
+    // will iterate through all the game pieces
+    for(let i = 0; i < tempArray.length && !this.gameDone && !game.gameOver; ++i)
     {
-      alert("piece: " + i.toString());
+      // alert("piece: " + i.toString());
       console.log('this.matrix before calls');
       for(g = 0; g<this.matrix.length; ++g)
       {
         console.log(this.matrix[g]);
       }
       // will iterate through all the different rotations
-      let max = -999999
+      let bestState = null;
+
       // checks this particular tetromino rotation
-      for(let j = 0; j < tempArray[i].tetromino.length; ++j)
+      for(let j = 0; j < tempArray[i].tetromino.length && !this.gameDone && !game.gameOver; ++j)
       {
         // alert("rotation: " + j.toString());
         // moves the piece as far left as possible so that we can linearly search each state from left to right
-        this.moveFarLeft(tempArray[i].tetromino[0]);
+        this.moveFarLeft(tempArray[i].tetromino[j]);
+
+        console.log('tetromino');
+        for(g = 0; g<tempArray[i].tetromino[j].length; ++g)
+        {
+          console.log(tempArray[i].tetromino[j][g]);
+        }
 
         // checks this particular rotation of the tetromino
         // we need to find the actual length that the piece occupies and not the length of the array <------------FIX THIS------------------------FIX THIS
@@ -70,26 +73,50 @@ BestFirstSearch.prototype.startAI = function()
         {
           // finds the lowest point where the piece on go in the matrix
           this.hardDrop(tempArray[i].tetromino[j]);
+
+          let tempScore = this.score;
           // locks the piece into a temporary matrix that will get returned and
           // then heuristically evaluated
           // needs to use the copy function that i found online inorder to make a deep copy manually
           let tempMatrix = this.tempLock(tempArray[i].tetromino[j], copy(this.matrix));
-          let tempState = new State(tempMatrix, tetrominoN, curX)
+          let tempState = new State(tempMatrix, j, this.x, this.score - tempScore);
 
+          if(bestState == null)
+          {
+            bestState = tempState;
+          }
+          else if (bestState.value < tempState.value)
+          {
+            // updates the bestState and deletes the old one
+            let temp = bestState;
+            bestState = tempState;
+            delete temp;
+
+          }
+          else
+          {
+              delete tempState;
+          }
+          this.score = tempScore;
           this.y = 0;
         }
 
-        // resets the coordinates for the next piece
+        // resets the coordinates for the next piece rotation
         this.y = 0;
         this.x = 3;
 
       }
 
-      this.path += "D";
+      this.matrix = bestState.matrix;
+
+      this.updatePath(bestState);
+
+      delete bestState;
+
       console.log(this.path);
     }
-
-    this.gameDone = true;
+    this.movePiece();
+    // this.gameDone = true;
   }
 }
 
@@ -112,7 +139,7 @@ BestFirstSearch.prototype.hardDrop = function(tetromino)
 
 BestFirstSearch.prototype.collision = function(offsetX, offsetY, pieceType)
 {
-  console.log("BEST first search collision");
+  // console.log("BEST first search collision");
   for(i = 0; i < pieceType.length; ++i)
   {
     for(j = 0; j < pieceType.length; ++j)
@@ -219,78 +246,96 @@ BestFirstSearch.prototype.tempLock = function(tetromino, cur_matrix)
    }
    return cur_matrix;
 }
-// moves the piece left if there is no collision
-Game.prototype.moveLeft = function()
+
+// // moves the piece left if there is no collision
+// Game.prototype.moveLeft = function()
+// {
+//   if(!this.collision(-1, 0, this.activePiece.activeTetromino))
+//   {
+//     this.unDraw();
+//     this.x--;
+//     this.draw();
+//     // resets the lock time
+//     this.lockTime = Date.now();
+//
+//     // drops ghost piece
+//     this.ghostDrop(true);
+//   }
+// }
+//
+// // moves the piece right if there is no collision
+// Game.prototype.moveRight = function()
+// {
+//   console.log("right");
+//   if(!this.collision(1, 0, this.activePiece.activeTetromino))
+//   {
+//     this.unDraw();
+//     this.x++;
+//     this.draw();
+//     // resets the lock time
+//     this.lockTime = Date.now();
+//
+//     // drops ghost piece
+//     this.ghostDrop(true);
+//   }
+// }
+//
+// // only have the ability to rotate clockwise
+// Game.prototype.rotate = function()
+// {
+//   if(!this.collision(0, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]))
+//   {
+//     this.unDraw();
+//     this.activePiece.tetrominoN = (++this.activePiece.tetrominoN) % 4;
+//     this.activePiece.activeTetromino = this.activePiece.tetromino[this.activePiece.tetrominoN];
+//     this.draw();
+//     // resets the lock time
+//     this.lockTime = Date.now();
+//
+//     // drops ghost piece
+//     this.unDraw("ghost");
+//     this.ghostPiece.tetrominoN = (++this.ghostPiece.tetrominoN) % 4;
+//     this.ghostPiece.activeTetromino = this.ghostPiece.tetromino[this.ghostPiece.tetrominoN];
+//
+//     this.ghostDrop(false);
+//   }
+//   // try new location with the shift amount from the previous function call
+//   else if(!this.collision(this.shiftAmount, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]))
+//   {
+//     this.unDraw();
+//     this.x += this.shiftAmount;
+//     this.activePiece.activeTetromino = this.activePiece.tetromino[(++this.activePiece.tetrominoN) % 4];
+//     this.draw();
+//     // resets the lock time
+//     this.lockTime = Date.now();
+//
+//     // drops ghost piece
+//     this.unDraw("ghost");
+//     this.ghostPiece.tetrominoN = (++this.ghostPiece.tetrominoN) % 4
+//     this.ghostPiece.activeTetromino = this.ghostPiece.tetromino[this.ghostPiece.tetrominoN];
+//
+//     this.ghostDrop(false);
+//   }
+// }
+
+BestFirstSearch.prototype.updatePath = function(curState)
 {
-  if(!this.collision(-1, 0, this.activePiece.activeTetromino))
-  {
-    this.unDraw();
-    this.x--;
-    this.draw();
-    // resets the lock time
-    this.lockTime = Date.now();
+  // for which rotation we are using
+  this.path += "C".repeat(curState.tetrominoN);
 
-    // drops ghost piece
-    this.ghostDrop(true);
+  // determines which way the piece will move
+  let dirNum = curState.x - 3;
+  if(dirNum < 0)
+  {
+    this.path += "L".repeat(Math.abs(dirNum));
   }
+  else
+  {
+    this.path += "R".repeat(dirNum);
+  }
+  // for putting the piece all the way down
+  this.path += "D";
 }
-
-// moves the piece right if there is no collision
-Game.prototype.moveRight = function()
-{
-  console.log("right");
-  if(!this.collision(1, 0, this.activePiece.activeTetromino))
-  {
-    this.unDraw();
-    this.x++;
-    this.draw();
-    // resets the lock time
-    this.lockTime = Date.now();
-
-    // drops ghost piece
-    this.ghostDrop(true);
-  }
-}
-
-// only have the ability to rotate clockwise
-Game.prototype.rotate = function()
-{
-  if(!this.collision(0, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]))
-  {
-    this.unDraw();
-    this.activePiece.tetrominoN = (++this.activePiece.tetrominoN) % 4;
-    this.activePiece.activeTetromino = this.activePiece.tetromino[this.activePiece.tetrominoN];
-    this.draw();
-    // resets the lock time
-    this.lockTime = Date.now();
-
-    // drops ghost piece
-    this.unDraw("ghost");
-    this.ghostPiece.tetrominoN = (++this.ghostPiece.tetrominoN) % 4;
-    this.ghostPiece.activeTetromino = this.ghostPiece.tetromino[this.ghostPiece.tetrominoN];
-
-    this.ghostDrop(false);
-  }
-  // try new location with the shift amount from the previous function call
-  else if(!this.collision(this.shiftAmount, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]))
-  {
-    this.unDraw();
-    this.x += this.shiftAmount;
-    this.activePiece.activeTetromino = this.activePiece.tetromino[(++this.activePiece.tetrominoN) % 4];
-    this.draw();
-    // resets the lock time
-    this.lockTime = Date.now();
-
-    // drops ghost piece
-    this.unDraw("ghost");
-    this.ghostPiece.tetrominoN = (++this.ghostPiece.tetrominoN) % 4
-    this.ghostPiece.activeTetromino = this.ghostPiece.tetromino[this.ghostPiece.tetrominoN];
-
-    this.ghostDrop(false);
-  }
-}
-
-
 
 // moves the current piece based on the path instructions
 BestFirstSearch.prototype.movePiece = function()
@@ -316,7 +361,7 @@ BestFirstSearch.prototype.movePiece = function()
       game.hardDrop();
     }
   }
-
+  this.path = "";
   console.log("======= leaving function movePiece =======");
 }
 
@@ -332,18 +377,40 @@ function copy(o) {
 
 // this class is similar to the Game class but it is going to have less member vairables
 // which will hopefully increase the speed and reduce memory
-function State(matrix, tetrominoN, curX)
+function State(matrix, tetrominoN, curX, score)
 {
   // the matrix that is our current state and will be evaluated
   // this is also going to be used to pass into the next state so we can build off of that
   this.matrix = matrix;
-  // the best heuristic value we can get
-  this.value = -999999;
 
   // this will let us know which rotation to use for the tetromino piece
   this.tetrominoN = tetrominoN;
   // the x value will determine if we move left and right and by how much
-  this.x = 0;
+  this.x = curX;
+
+  // the best heuristic value we can get
+  this.value = this.heuristic();
+}
+
+// evaluatse the value of the state and provides a hueristic value for it
+State.prototype.heuristic = function()
+{
+  let std_height = 0;
+  let gaps = 0;
+  let height = 0;
+  let scoreIncrease = 0;
+
+  for(i = 0; i< this.matrix.length; ++i)
+  {
+    for(j = 0; j < this.matrix.length; ++j)
+    {
+      if(this.matrix[i][j] == 1)
+      {
+        return i - 19;
+      }
+    }
+  }
+  return 0;
 }
 
 var best = new BestFirstSearch();
