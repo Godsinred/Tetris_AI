@@ -46,11 +46,11 @@ BestFirstSearch.prototype.startAI = function()
     for(let i = 0; i < tempArray.length && !this.gameDone && !game.gameOver; ++i)
     {
       // alert("piece: " + i.toString());
-      console.log('this.matrix before calls');
-      for(g = 0; g<this.matrix.length; ++g)
-      {
-        console.log(this.matrix[g]);
-      }
+      // console.log('this.matrix before calls');
+      // for(g = 0; g<this.matrix.length; ++g)
+      // {
+      //   console.log(this.matrix[g]);
+      // }
       // will iterate through all the different rotations
       let bestState = null;
 
@@ -61,11 +61,11 @@ BestFirstSearch.prototype.startAI = function()
         // moves the piece as far left as possible so that we can linearly search each state from left to right
         this.moveFarLeft(tempArray[i].tetromino[j]);
 
-        console.log('tetromino');
-        for(g = 0; g<tempArray[i].tetromino[j].length; ++g)
-        {
-          console.log(tempArray[i].tetromino[j][g]);
-        }
+        // console.log('tetromino');
+        // for(g = 0; g<tempArray[i].tetromino[j].length; ++g)
+        // {
+        //   console.log(tempArray[i].tetromino[j][g]);
+        // }
 
         // checks this particular rotation of the tetromino
         // we need to find the actual length that the piece occupies and not the length of the array <------------FIX THIS------------------------FIX THIS
@@ -274,22 +274,22 @@ BestFirstSearch.prototype.movePiece = function()
   {
     if(this.path[i] == "L")
     {
-      console.log("MOVING LEFT");
+      // console.log("MOVING LEFT");
       game.moveLeft();
     }
     else if (this.path[i] == "R")
     {
-      console.log("MOVING RIGHT");
+      // console.log("MOVING RIGHT");
       game.moveRight();
     }
     else if (this.path[i] == "C")
     {
-      console.log("ROTATING");
+      // console.log("ROTATING");
       game.rotate();
     }
     else if (this.path[i] == "D")
     {
-      console.log("HARD DROP");
+      // console.log("HARD DROP");
       game.hardDrop();
     }
   }
@@ -307,6 +307,15 @@ function copy(o) {
    return output;
 }
 
+function sleep(ms)
+{
+  var date = new Date();
+  var curDate = null;
+  do
+  {
+    curDate = new Date();
+  } while (curDate , ms);
+}
 // this class is similar to the Game class but it is going to have less member vairables
 // which will hopefully increase the speed and reduce memory
 function State(matrix, tetrominoN, curX, scoreIncrease)
@@ -341,7 +350,7 @@ State.prototype.heuristic = function()
   var si = 0;
   if (scoreIncrease >= 40)
   {
-    si = 50;
+    si = 500;
   }
   else
   {
@@ -349,13 +358,8 @@ State.prototype.heuristic = function()
   }
   if (numGaps > 0)
   {
-    si = 10
+    si = 10 * numGaps;
   }
-  console.log("heur items");
-  console.log(numGaps);
-  console.log(maxHeight);
-  console.log(std_height);
-  console.log(scoreIncrease);
 
   let heur = -(numGaps * 100) - (maxHeight / 2) - (std_height * 4) + (scoreIncrease * si);
   console.log(heur);

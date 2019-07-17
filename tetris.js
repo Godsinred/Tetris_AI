@@ -201,7 +201,7 @@ Game.prototype.unDraw = function(ghost)
 // other pieces
 Game.prototype.collision = function(offsetX, offsetY, pieceType, ghost)
 {
-  console.log("collision");
+  // console.log("collision");
   if(ghost === "ghost")
   {
     var indexX = this.ghostX;
@@ -375,7 +375,6 @@ Game.prototype.counterRotate = function()
 // moves the piece right if there is no collision
 Game.prototype.moveRight = function()
 {
-  console.log("right");
   if(!this.collision(1, 0, this.activePiece.activeTetromino) && !this.gameOver)
   {
     this.unDraw();
