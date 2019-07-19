@@ -127,7 +127,7 @@ Game.prototype.generateStartingPieces = function()
   {
     let j = 0;
     // random index from 0 - 6 initially, then decrements from there
-    j = Math.floor(Math.random() * (i + 1));
+    j = Math.floor(randomSeeded.nextFloat() * (i + 1));
     this.listOfNextPieces.push(new Piece(PIECES[nums[j]][0], PIECES[nums[j]][1]));
 
     // removes the jth item from the list
@@ -266,7 +266,7 @@ Game.prototype.moveDown = function()
     // resets the lock time
     this.lockTime = Date.now();
   }
-  else
+  else if(!this.gameOver)
   {
     // this means it collided with something trying to move move down
     // if the lock time is longer than 0.5s then the piece gets locked
@@ -283,7 +283,10 @@ Game.prototype.moveLeft = function()
 {
   if(!this.collision(-1, 0, this.activePiece.activeTetromino) && !this.gameOver)
   {
+    // sleep(1000);
     this.unDraw();
+    // sleep(2000);
+
     this.x--;
     this.draw();
     // resets the lock time
@@ -299,7 +302,9 @@ Game.prototype.rotate = function()
 {
   if(!this.collision(0, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 1) % 4]) && !this.gameOver)
   {
+    // sleep(1000);
     this.unDraw();
+
     this.activePiece.tetrominoN = (++this.activePiece.tetrominoN) % 4;
     this.activePiece.activeTetromino = this.activePiece.tetromino[this.activePiece.tetrominoN];
     this.draw();
@@ -337,7 +342,7 @@ Game.prototype.counterRotate = function()
 {
   if(!this.collision(0, 0, this.activePiece.tetromino[(this.activePiece.tetrominoN + 3) % 4]) && !this.gameOver)
   {
-
+    // sleep(1000);
     this.unDraw();
     this.activePiece.tetrominoN = (this.activePiece.tetrominoN + 3) % 4;
     this.activePiece.activeTetromino = this.activePiece.tetromino[this.activePiece.tetrominoN];
@@ -377,6 +382,7 @@ Game.prototype.moveRight = function()
 {
   if(!this.collision(1, 0, this.activePiece.activeTetromino) && !this.gameOver)
   {
+    // sleep(1000);
     this.unDraw();
     this.x++;
     this.draw();
@@ -395,11 +401,14 @@ Game.prototype.hardDrop = function()
   {
     this.y++;
   }
-  this.unDraw("ghost");
+  if(!this.gameOver)
+  {
+    this.unDraw("ghost");
 
-  this.unDraw();
-  this.draw();
-  this.lock();
+    this.unDraw();
+    this.draw();
+    this.lock();
+  }
 }
 
 // drops ghost piece
@@ -490,7 +499,7 @@ Game.prototype.lock = function()
          {
            this.dropSpeed *= 0.80;
          }
-         console.log(this.dropSpeed);
+         // console.log(this.dropSpeed);
      }
  }
 
@@ -526,7 +535,7 @@ Game.prototype.getNextPiece = function()
   this.ghostPiece = new Piece(this.activePiece.tetromino, this.getGhostColor(this.activePiece.color)); // <---------------------------------------------------------------------!!!!! FIX COPYING OF OBJ !!!!!
 
   // generates a random number 0 - 6
-  randomNum = Math.floor(Math.random() * PIECES.length)
+  randomNum = Math.floor(randomSeeded.nextFloat() * PIECES.length)
   // adds a piece to replace the one that was taken
   this.listOfNextPieces.push(new Piece(PIECES[randomNum][0], PIECES[randomNum][1]));
   // console.log(listOfNextPieces);
@@ -753,20 +762,44 @@ function displaySettings()
   alert("Change Settings Button!");
 }
 
+// got this code from https://gist.github.com/blixt/f17b47c62508be59987b
+function Random(seed) {
+  this._seed = seed % 2147483647;
+  if (this._seed <= 0) this._seed += 2147483646;
+}
 
-// // main
-//
-// // the current tetris piece in use
-// var game = new Game();
-// // draws the board and the boarder around it
-// game.drawBoard();
-// game.drawBoarder();
-// // creates the starting pieces for the game
-// game.generateStartingPieces();
-// // gets the first piece of the game
-// game.getNextPiece();
-// // so the first piece has a ghost piece before any input is received
-// game.ghostDrop();
-//
-// // starts the dropping sequence
-// drop();
+/**
+ * Returns a pseudo-random value between 1 and 2^32 - 2.
+ */
+Random.prototype.next = function () {
+  return this._seed = this._seed * 16807 % 2147483647;
+};
+
+
+/**
+ * Returns a pseudo-random floating point number in range [0, 1).
+ */
+Random.prototype.nextFloat = function (opt_minOrMax, opt_max) {
+  // We know that result of next() will be 1 to 2147483646 (inclusive).
+  return (this.next() - 1) / 2147483646;
+};
+
+// the current tetris piece in use
+var randomSeeded = new Random(1);
+var game = new Game();
+// draws the board and the boarder around it
+game.drawBoard();
+game.drawBoarder();
+// creates the starting pieces for the game
+game.generateStartingPieces();
+// gets the first piece of the game
+game.getNextPiece();
+
+// this will be called from the button press from index
+function StartGame()
+{
+  // so the first piece has a ghost piece before any input is received
+  game.ghostDrop();
+  // starts the dropping sequence
+  drop();
+}

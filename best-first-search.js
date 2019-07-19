@@ -1,17 +1,17 @@
 // // the current tetris piece in use
-var game = new Game();
-// draws the board and the boarder around it
-game.drawBoard();
-game.drawBoarder();
-// creates the starting pieces for the game
-game.generateStartingPieces();
-// gets the first piece of the game
-game.getNextPiece();
-// so the first piece has a ghost piece before any input is received
-game.ghostDrop();
-
-// starts the dropping sequence
-drop();
+// var game = new Game();
+// // draws the board and the boarder around it
+// game.drawBoard();
+// game.drawBoarder();
+// // creates the starting pieces for the game
+// game.generateStartingPieces();
+// // gets the first piece of the game
+// game.getNextPiece();
+// // so the first piece has a ghost piece before any input is received
+// game.ghostDrop();
+//
+// // starts the dropping sequence
+// drop();
 
 // the heuristic class we are going to use to evaluate the state of the game
 function BestFirstSearch()
@@ -23,6 +23,7 @@ function BestFirstSearch()
   // creates a 2d array of row and colum of 0s
   this.matrix = Array(ROW).fill().map(() => Array(COLUMN).fill(0));
 
+  // this info will be passed into state letting it know that this is a losing state
   this.gameDone = false;
 
   // the current x/y value of the search
@@ -68,8 +69,8 @@ BestFirstSearch.prototype.startAI = function()
         // }
 
         // checks this particular rotation of the tetromino
-        // we need to find the actual length that the piece occupies and not the length of the array <------------FIX THIS------------------------FIX THIS
-        for(let k = 0;this.x <= COLUMN - tempArray[i].tetromino[j].length; ++this.x)
+        var width = this.getActualWidth(tempArray[i].tetromino[j])
+        for(let k = 0;this.x <= COLUMN - width; ++this.x)
         {
           // finds the lowest point where the piece on go in the matrix
           this.hardDrop(tempArray[i].tetromino[j]);
@@ -79,7 +80,16 @@ BestFirstSearch.prototype.startAI = function()
           // then heuristically evaluated
           // needs to use the copy function that i found online inorder to make a deep copy manually
           let tempMatrix = this.tempLock(tempArray[i].tetromino[j], copy(this.matrix));
-          let tempState = new State(tempMatrix, j, this.x, this.score - tempScore);
+
+          // to pass that the game is over with this state
+          if(this.gameDone)
+          {
+            var tempState = new State(tempMatrix, j, this.x, this.score - tempScore, true);
+            this.gameDone = false;
+          }
+          else {
+            var tempState = new State(tempMatrix, j, this.x, this.score - tempScore, false);
+          }
 
           if(bestState == null)
           {
@@ -113,10 +123,10 @@ BestFirstSearch.prototype.startAI = function()
 
       delete bestState;
 
-      console.log(this.path);
+      // console.log(this.path);
     }
     this.movePiece();
-    // this.gameDone = true;
+
   }
 }
 
@@ -194,9 +204,8 @@ BestFirstSearch.prototype.tempLock = function(tetromino, cur_matrix)
            // might change this later so that you lose if the whole piece gets locked above the screen
            if(this.y + i < 0)
            {
-               alert("BFS Game Over");
+               // alert("BFS Game Over");
                this.gameDone = true;
-               return;
            }
 
            // we lock the piece
@@ -296,6 +305,37 @@ BestFirstSearch.prototype.movePiece = function()
   this.path = "";
   console.log("======= leaving function movePiece =======");
 }
+BestFirstSearch.prototype.getActualWidth = function (tetro)
+{
+  var width = Array(tetro.length).fill(0);
+
+  for(let i = 0; i < tetro.length; ++i)
+  {
+    for(let j = 0; j < tetro.length; ++j)
+    {
+      width[j] += tetro[i][j];
+    }
+  }
+
+  var start = -1;
+  var end = -1;
+  for(var i = 0; i < width.length; ++i)
+  {
+    if(width[i] >= 1 && start == -1)
+    {
+      start = i;
+    }
+    if(start != -1 && end == -1)
+    {
+      end = start;
+    }
+    else if(width[i] > 0 && end != -1)
+    {
+      ++end;
+    }
+  }
+  return end - start + 1;
+};
 
 function copy(o) {
    var output, v, key;
@@ -309,16 +349,17 @@ function copy(o) {
 
 function sleep(ms)
 {
+  console.log("SLEEP");
   var date = new Date();
   var curDate = null;
   do
   {
     curDate = new Date();
-  } while (curDate , ms);
+  } while (curDate - date < ms);
 }
 // this class is similar to the Game class but it is going to have less member vairables
 // which will hopefully increase the speed and reduce memory
-function State(matrix, tetrominoN, curX, scoreIncrease)
+function State(matrix, tetrominoN, curX, scoreIncrease, didLose)
 {
   // the matrix that is our current state and will be evaluated
   // this is also going to be used to pass into the next state so we can build off of that
@@ -328,6 +369,7 @@ function State(matrix, tetrominoN, curX, scoreIncrease)
   this.tetrominoN = tetrominoN;
   // the x value will determine if we move left and right and by how much
   this.x = curX;
+  this.loseState = didLose;
 
   // heuristic parameters to help evaluate the value
   this.maxHeight = Array(COLUMN).fill(0);
@@ -356,13 +398,23 @@ State.prototype.heuristic = function()
   {
     si = 1;
   }
-  if (numGaps > 0)
+  if (numGaps > 0 && scoreIncrease >= 10)
   {
-    si = 10 * numGaps;
+    si *= 10 * numGaps;
+  }
+  if (maxHeight > 5 && scoreIncrease >= 10)
+  {
+    si *= maxHeight;
   }
 
-  let heur = -(numGaps * 100) - (maxHeight / 2) - (std_height * 4) + (scoreIncrease * si);
-  console.log(heur);
+
+  let heur = -(numGaps * 50) - (maxHeight / 2) - (std_height * 4) + (scoreIncrease * si);
+  // if(this.loseState)
+  // {
+  //   alert(loseState);
+  //   heur -= 10000;
+  // }
+  // console.log(heur);
   return heur;
 }
 
@@ -405,8 +457,3 @@ State.prototype.getStdHeight = function()
 
   return standardDev / COLUMN;
 }
-
-
-var best = new BestFirstSearch();
-best.startAI();
-console.log("END AI");
