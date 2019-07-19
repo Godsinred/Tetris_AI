@@ -28,7 +28,7 @@ function BestFirstSearch()
 
   // the current x/y value of the search
   this.x = 3;
-  this.y = 0;
+  this.y = -2;
 }
 
 // the main function of the AI that will loop until the game is over
@@ -108,11 +108,11 @@ BestFirstSearch.prototype.startAI = function()
               delete tempState;
           }
           this.score = tempScore;
-          this.y = 0;
+          this.y = -2;
         }
 
         // resets the coordinates for the next piece rotation
-        this.y = 0;
+        this.y = -2;
         this.x = 3;
 
       }
@@ -192,7 +192,7 @@ BestFirstSearch.prototype.tempLock = function(tetromino, cur_matrix)
 {
     for(let i = 0; i < tetromino.length; ++i)
     {
-       for(let j = 0; j < tetromino.length && !this.gameDone; ++j)
+       for(let j = 0; j < tetromino.length; ++j)
        {
            // ingore the empty/0 indexes
            if( !tetromino[i][j])
@@ -206,6 +206,7 @@ BestFirstSearch.prototype.tempLock = function(tetromino, cur_matrix)
            {
                // alert("BFS Game Over");
                this.gameDone = true;
+               continue;
            }
 
            // we lock the piece
@@ -409,11 +410,10 @@ State.prototype.heuristic = function()
 
 
   let heur = -(numGaps * 50) - (maxHeight / 2) - (std_height * 4) + (scoreIncrease * si);
-  // if(this.loseState)
-  // {
-  //   alert(loseState);
-  //   heur -= 10000;
-  // }
+  if(this.loseState)
+  {
+    heur -= 100000;
+  }
   // console.log(heur);
   return heur;
 }
