@@ -1,17 +1,4 @@
-// // the current tetris piece in use
-// var game = new Game();
-// // draws the board and the boarder around it
-// game.drawBoard();
-// game.drawBoarder();
-// // creates the starting pieces for the game
-// game.generateStartingPieces();
-// // gets the first piece of the game
-// game.getNextPiece();
-// // so the first piece has a ghost piece before any input is received
-// game.ghostDrop();
-//
-// // starts the dropping sequence
-// drop();
+
 
 // the heuristic class we are going to use to evaluate the state of the game
 function BestFirstSearch()
@@ -35,100 +22,137 @@ function BestFirstSearch()
 BestFirstSearch.prototype.startAI = function()
 {
   while(!this.gameDone && !game.gameOver)
-  // while(this.score <= 100)
   {
     // makes a list of the current available pieces to be passed into the heuristic functions
     // currently doing first 3 states since there are so many permutations
     var tempArray = game.listOfNextPieces.slice();
-    tempArray.unshift(new Piece(game.activePiece.tetromino, game.activePiece.color));
+    // tempArray.unshift(new Piece(game.activePiece.tetromino, game.activePiece.color));
+    var currentPiece = new Piece(game.activePiece.tetromino, game.activePiece.color);
+    var holdPiece = game.holdPiece;
 
     this.score = game.score;
     // will iterate through all the game pieces
-    for(let i = 0; i < tempArray.length && !this.gameDone && !game.gameOver; ++i)
+    // for(let i = 0; i < tempArray.length && !this.gameDone && !game.gameOver; ++i)
+    while(tempArray.length != 0 && !this.gameDone && !game.gameOver)
     {
-      // alert("piece: " + i.toString());
-      // console.log('this.matrix before calls');
-      // for(g = 0; g<this.matrix.length; ++g)
-      // {
-      //   console.log(this.matrix[g]);
-      // }
-      // will iterate through all the different rotations
-      let bestState = null;
 
-      // checks this particular tetromino rotation
-      for(let j = 0; j < tempArray[i].tetromino.length && !this.gameDone && !game.gameOver; ++j)
+      var holdState = null;
+      var holdMatrix = copy(this.matrix);
+
+
+      // evaluates this current piece
+      var bestState = this.evaluatePiece(currentPiece);
+
+      var holdState = this.evaluatePiece(holdPiece);
+
+      if(holdState === null)
       {
-        // alert("rotation: " + j.toString());
-        // moves the piece as far left as possible so that we can linearly search each state from left to right
-        this.moveFarLeft(tempArray[i].tetromino[j]);
-
-        // console.log('tetromino');
-        // for(g = 0; g<tempArray[i].tetromino[j].length; ++g)
-        // {
-        //   console.log(tempArray[i].tetromino[j][g]);
-        // }
-
-        // checks this particular rotation of the tetromino
-        var width = this.getActualWidth(tempArray[i].tetromino[j])
-        for(let k = 0;this.x <= COLUMN - width; ++this.x)
+        if(bestState.value <= -50)
         {
-          // finds the lowest point where the piece on go in the matrix
-          this.hardDrop(tempArray[i].tetromino[j]);
-
-          let tempScore = this.score;
-          // locks the piece into a temporary matrix that will get returned and
-          // then heuristically evaluated
-          // needs to use the copy function that i found online inorder to make a deep copy manually
-          let tempMatrix = this.tempLock(tempArray[i].tetromino[j], copy(this.matrix));
-
-          // to pass that the game is over with this state
-          if(this.gameDone)
-          {
-            var tempState = new State(tempMatrix, j, this.x, this.score - tempScore, true);
-            this.gameDone = false;
-          }
-          else {
-            var tempState = new State(tempMatrix, j, this.x, this.score - tempScore, false);
-          }
-
-          if(bestState == null)
-          {
-            bestState = tempState;
-          }
-          else if (bestState.value < tempState.value)
-          {
-            // updates the bestState and deletes the old one
-            let temp = bestState;
-            bestState = tempState;
-            delete temp;
-
-          }
-          else
-          {
-              delete tempState;
-          }
-          this.score = tempScore;
-          this.y = -2;
+          holdPiece = currentPiece;
+          this.path += "H";
         }
-
-        // resets the coordinates for the next piece rotation
-        this.y = -2;
-        this.x = 3;
-
+        else
+        {
+          this.matrix = bestState.matrix;
+          this.updatePath(bestState);
+        }
+      }
+      else
+      {
+        if(holdState.value > bestState.value)
+        {
+          var temp = currentPiece;
+          currentPiece = holdPiece;
+          holdPiece = temp;
+          this.path += "H";
+          this.matrix = holdState.matrix;
+          this.updatePath(holdState);
+        }
+        else
+        {
+          this.matrix = bestState.matrix;
+          this.updatePath(bestState);
+        }
       }
 
-      this.matrix = bestState.matrix;
-
-      this.updatePath(bestState);
-
       delete bestState;
-
+      delete holdState;
       // console.log(this.path);
+      // delete currentPiece;
+
+      currentPiece = tempArray.shift();
     }
     this.movePiece();
-
   }
 }
+
+BestFirstSearch.prototype.evaluatePiece = function (currentPiece)
+{
+  // this is for the first hold piece that is 0
+  if(currentPiece === 0)
+  {
+    return null;
+  }
+  var bestState = null;
+  // checks this particular tetromino rotation
+  for(let j = 0; j < currentPiece.tetromino.length && !this.gameDone && !game.gameOver; ++j)
+  {
+    // moves the piece as far left as possible so that we can linearly search each state from left to right
+    this.moveFarLeft(currentPiece.tetromino[j]);
+
+
+    // checks this particular rotation of the tetromino
+    var width = this.getActualWidth(currentPiece.tetromino[j])
+    for(let k = 0;this.x <= COLUMN - width; ++this.x)
+    {
+      // finds the lowest point where the piece on go in the matrix
+      this.hardDrop(currentPiece.tetromino[j]);
+
+      let tempScore = this.score;
+      // locks the piece into a temporary matrix that will get returned and
+      // then heuristically evaluated
+      // needs to use the copy function that i found online inorder to make a deep copy manually
+      let tempMatrix = this.tempLock(currentPiece.tetromino[j], copy(this.matrix));
+
+      // to pass that the game is over with this state
+      if(this.gameDone)
+      {
+        var tempState = new State(tempMatrix, j, this.x, this.score - tempScore, true);
+        this.gameDone = false;
+      }
+      else
+      {
+        var tempState = new State(tempMatrix, j, this.x, this.score - tempScore, false);
+      }
+
+      if(bestState == null)
+      {
+        bestState = tempState;
+      }
+      else if (bestState.value < tempState.value)
+      {
+        // updates the bestState and deletes the old one
+        let temp = bestState;
+        bestState = tempState;
+        delete temp;
+
+      }
+      else
+      {
+          delete tempState;
+      }
+      this.score = tempScore;
+      this.y = -2;
+    }
+
+    // resets the coordinates for the next piece rotation
+    this.y = -2;
+    this.x = 3;
+
+  }
+  return bestState;
+};
 
 BestFirstSearch.prototype.moveFarLeft = function(tetromino)
 {
@@ -302,6 +326,11 @@ BestFirstSearch.prototype.movePiece = function()
       // console.log("HARD DROP");
       game.hardDrop();
     }
+    else if (this.path[i] == "H")
+    {
+      // console.log("HARD DROP");
+      game.hold();
+    }
   }
   this.path = "";
   console.log("======= leaving function movePiece =======");
@@ -399,17 +428,10 @@ State.prototype.heuristic = function()
   {
     si = 1;
   }
-  if (numGaps > 0 && scoreIncrease >= 10)
-  {
-    si *= 10 * numGaps;
-  }
-  if (maxHeight > 5 && scoreIncrease >= 10)
-  {
-    si *= maxHeight;
-  }
+  // console.log("scoreIncrease: " + scoreIncrease.toString());
+  let heur = -(numGaps * 100) - (maxHeight / 2) - (std_height * 10) + (scoreIncrease * si);
 
-
-  let heur = -(numGaps * 50) - (maxHeight / 2) - (std_height * 4) + (scoreIncrease * si);
+  // we want to lower the value of the state if we go to a losing one
   if(this.loseState)
   {
     heur -= 100000;
