@@ -15,14 +15,14 @@ You will need any browser with JavaScript capabilities.
 
 A web browser.
 
-### Break down of the code
+## Break down of the code
 
-#### index.html
+## index.html
 
 This file holds the canvas where the Tetris board is created and updated on.
 It is also responsible for loading all the JavaScript(js) into the browser.
 
-#### tetris.js
+## tetris.js
 
 ### Class Game
 This holds the html canvas object for where we kept track of the pieces and other essential variable of the game.
@@ -118,8 +118,9 @@ Call this function for a random float from 0-1 and not next.
 ### function StartGame()
 This gets called when the button on the index.html get pressed so we can start the game for the user to play.
 
+## steepest-hill-climbing.js
 
-
+## start-ai.js
 
 
 
