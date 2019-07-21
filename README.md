@@ -2,18 +2,28 @@
 
   The program allows the user to play the classic game of Tetris or if selected the AI can play a game for you.
   A steepest hill climbing algorithm is used to choose the next state of the Tetris game.
-  
+
+## Developers
+
+* **Jonathan Ishii**     ------ [Godsinred](https://github.com/Godsinred)
+
 ## Short Video Of The Program
 
 N/A yet
 
 ## Getting Started
 
-You will need any browser with JavaScript capabilities.
+You will need any browser with JavaScript capabilities. To run double click index.html and it will open in your default browser or drag and drop the file into a browser.
 
 ### Prerequisites
-
 A web browser.
+
+## Technical Implementation
+When the program is first started it creates the game board and sets up all the GUI.
+
+From here we can either choose Start Game and play the game ourselves or Start AI.
+
+When Start AI is first called we initialize our steepest hill climbing object. Once initialized we call our steepestHillClimbing function which will run until the game is over. For each iteration of this function we grab the currently active piece along with the hold piece and the set of next 7 pieces. From there we evaluate the hold piece and active piece to see which state is the best. After evaluting them we append the path that we took to get there to the class path object. Atfer we evaluate all the pieces we call movePiece. This will move the set of pieces that we evaluated based on the move path that we generated. We repeat this until the game is over.
 
 ## Break down of the code
 
@@ -67,7 +77,7 @@ Drops the piece as far down as it can go and then locks it to the board.
 Drops the shadow or ghost piece of the actual piece to the bottom of the board, so the user has an easy visualization of where the hard drop piece will end up.
 
 ##### Class Game - function lock()
-Locks the current tetromino to the board and clears any rows if applicable. 
+Locks the current tetromino to the board and clears any rows if applicable.
 Sets up for the next piece as well.
 
 ##### Class Game - function getNextPiece()
@@ -119,14 +129,73 @@ Call this function for a random float from 0-1 and not next.
 This gets called when the button on the index.html get pressed so we can start the game for the user to play.
 
 ## steepest-hill-climbing.js
+This is where the AI algorithm takes place. All the helper functions along with the heuristic is held within this file.
+
+### Class SteepestHillClimbing
+It has the current matrix state along with the path that the pieces will generate.
+
+#### Class SteepestHillClimbing - function steepestHillClimbing()
+Call this function to start the AI process. It will loop until the game is over. It starts off by getting the current, hold, and next set of pieces. It will look at the current and hold piece and evaluate the best state for each one. Once evaluated it will choose the higher value one and switch accordingly.
+
+#### Class SteepestHillClimbing - function evaluatePiece()
+This function looks at every possible rotation and hard drop piece position from the top. It will evaluate it using the heuristic functino defined within the State class.
+
+#### Class SteepestHillClimbing - function moveFarLeft()
+This moves the param piece all the way left until it collides with the wall or bound by the top.
+
+#### Class SteepestHillClimbing - function hardDrop()
+Drops the piece all the way to the bottom.
+
+#### Class SteepestHillClimbing - function collision()
+Detects collision with in the board. Either with the boarders or another piece within the game.
+
+#### Class SteepestHillClimbing - function tempLock()
+Locks the tetromino to the hardDrop location in the provided matrix. Once locked it will clear any lines and increment the score accordingly. The function will return the matrix back to the callee.
+
+
+#### Class SteepestHillClimbing - function updatePath()
+Based on the current state the function will update the class member variable this.path accordingly. This way when movePiece is called it will know exactly where to move the tetromino.
+
+#### Class SteepestHillClimbing - function movePiece()
+Moves the tetrominos based on the path.
+
+#### Class SteepestHillClimbing - function getActualWidth()
+Gets the actual physical width of the tetromino and not just the array length.
+
+### function copy()
+Take in the matrix to be copied and returns a duplicate.
+Built in copy functions were returning a reference to the same array.
+
+### sleep()
+Takes in the amount of time to sleep.
+Currently not working the way it is intended. Trying to figure out how to slow down the prorgam so we can see each piece movement. setTimeout() not working as intended either.
+
+### Class State
+The class holds the matrix (board state) that is being evaluated, how much score has increased to this state, the rotation of the piece, the x coordidate, if we lose going to this state, the max height of the matrix, the sums of the columns, and the heuristic evaluation.
+
+#### Class State  - function heuristic()
+Evaluates the state based on the number of gaps on the board, the max height, the standard deviation of all the column heights, wether we can score on this move and if we lose the game going to this state.
+
+#### Class State  - function getHeight()
+Gets the max height of all the rows and sums up how many 1 are in each column.
+
+#### Class State  - function getNumGaps()
+Gets how many gaps there are in the matrix and returns that value.
+
+#### Class State  - function getStdHeight()
+Gets the standard deviation of the height of the board and returns that value.
+
 
 ## start-ai.js
+Has the main function which is called when the start AI button is clicked. This is in its own file because I was trying to defer the file from running until everything has been loaded so we can see each iteration. It only runs after everything has loaded atleast.
 
 
+## tetrominos.js
+Has all the tetrominos and their rotations in arrays.
+
+## /assets
+This folder has all the css and images for the web page.
 
 
-
-
-## Authors
-
-* **Jonathan Ishii**     ------ [Godsinred](https://github.com/Godsinred)
+## Contribute
+Contributions are always welcome!
