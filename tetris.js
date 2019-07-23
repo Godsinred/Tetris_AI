@@ -450,6 +450,15 @@ Game.prototype.lock = function()
          // might change this later so that you lose if the whole piece gets locked above the screen
          if(this.y + i < 0)
          {
+              console.log("GAME OVER");
+              console.log(this.activePiece.activeTetromino);
+             console.log(this.x);
+             console.log(this.y);
+             for(k = 0; k < this.activePiece.activeTetromino.length; ++k)
+             {
+               console.log(this.activePiece.activeTetromino[k]);
+             }
+
              this.gameOver = true;
              return;
          }
@@ -497,7 +506,7 @@ Game.prototype.lock = function()
 
          if(this.score % 50 == 0)
          {
-           this.dropSpeed *= 0.80;
+           this.dropSpeed *= 0.90;
          }
          // console.log(this.dropSpeed);
      }

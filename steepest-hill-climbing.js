@@ -1,11 +1,28 @@
+// from stackedover flow. used to make a deepy copy of an array since the built in
+// functions weren't creating copies properly
+function copy(o) {
+   var output, v, key;
+   output = Array.isArray(o) ? [] : {};
+   for (key in o) {
+       v = o[key];
+       output[key] = (typeof v === "object") ? copy(v) : v;
+   }
+   return output;
+}
 
+function printMatrix(matrix)
+{
+  for(let j = 0; j < matrix.length; ++j)
+  {
+      console.log(matrix[j]);
+  }
+}
 
 // the heuristic class we are going to use to evaluate the state of the game
-function BestFirstSearch()
+function SteepestHillClimbing()
 {
-  this.score = 0
-  // the best path that the ai can currently go to
-  this.path = "";
+  this.score = game.score;
+
   // the matrix that will represent the current stte of the board
   // creates a 2d array of row and colum of 0s
   this.matrix = Array(ROW).fill().map(() => Array(COLUMN).fill(0));
@@ -16,114 +33,96 @@ function BestFirstSearch()
   // the current x/y value of the search
   this.x = 3;
   this.y = -2;
+
+  // the games hold and active piece
+  this.currentPieceState = 0;
+  this.holdPieceState  = 0;
+
+  this.swapped = false;
 }
 
 // the main function of the AI that will loop until the game is over
-BestFirstSearch.prototype.startAI = function()
+SteepestHillClimbing.prototype.startAI = function()
 {
   while(!this.gameDone && !game.gameOver)
   {
-    // makes a list of the current available pieces to be passed into the heuristic functions
-    // currently doing first 3 states since there are so many permutations
-    var tempArray = game.listOfNextPieces.slice();
-    // tempArray.unshift(new Piece(game.activePiece.tetromino, game.activePiece.color));
-    var currentPiece = new Piece(game.activePiece.tetromino, game.activePiece.color);
-    var holdPiece = game.holdPiece;
-
-    this.score = game.score;
-    // will iterate through all the game pieces
-    // for(let i = 0; i < tempArray.length && !this.gameDone && !game.gameOver; ++i)
-    while(tempArray.length != 0 && !this.gameDone && !game.gameOver)
+    // checking to make sure that the game state matches our state
+    if(this.score != game.score)
     {
+      console.log("this.score != game.score");
+      console.log(this.score);
+      console.log(game.score);
+      alert('pause');
+    }
+    // evaluates this current piece and hold piece
+    // returns a State object
+    this.currentPieceState = this.getBestState(game.activePiece, copy(this.matrix));
 
-      var holdState = null;
-      var holdMatrix = copy(this.matrix);
+    this.holdPieceState = this.getBestState(game.holdPiece, copy(this.matrix));
 
-
-      // evaluates this current piece
-      console.log("CURRENT PIECE");
-      var bestState = this.evaluatePiece(currentPiece);
-      console.log("HOLD PIECE");
-      var holdState = this.evaluatePiece(holdPiece);
-
-      if(holdState === null)
+    // there is currently no hold piece
+    if(this.holdPieceState === 0)
+    {
+      // the current state isn't that great so we choose to hold it for now
+      if(this.currentPieceState.value <= -50)
       {
-        if(bestState.value <= -50)
-        {
-          holdPiece = currentPiece;
-          this.path += "H";
-        }
-        else
-        {
-          this.matrix = bestState.matrix;
-          this.updatePath(bestState);
-        }
+        this.movePiece("H");
+        // this.swapped = true;
       }
       else
       {
-        if(holdState.value > bestState.value)
+        if(this.currentPieceState.didLose)
         {
-          var temp = currentPiece;
-          currentPiece = holdPiece;
-          holdPiece = temp;
-          this.path += "H";
-          this.matrix = holdState.matrix;
-          this.updatePath(holdState);
+          console.log('we choose a losing state');
         }
-        else
-        {
-          this.matrix = bestState.matrix;
-          this.updatePath(bestState);
-        }
-      }
-      console.log("Choosen piece:");
-      console.log(this.x);
-      console.log(this.y);
-      // console.log(currentPiece.tetromino[bestState.tetrominoN]);
-      for(k = 0; k < currentPiece.tetromino[bestState.tetrominoN].length; ++k)
-      {
-        console.log(currentPiece.tetromino[bestState.tetrominoN][k]);
-      }
 
-      console.log("cur matrix:");
-      for(k = 0; k < this.matrix.length; ++k)
-      {
-        console.log(this.matrix[k]);
+        this.matrix = copy(this.currentPieceState.matrix);
+        this.score = this.currentPieceState.score;
+        this.movePiece(this.currentPieceState.path);
       }
-
-      if(this.matrix != bestState.matrix || this.matrix != holdState.matrix)
-      {
-        console.log('matrix do not match');
-        for(k = 0; k < bestState.matrix.length; ++k)
-        {
-          console.log(bestState.matrix[k]);
-        }
-      }
-      else {
-        console.log('match matrix');
-      }
-
-      console.log('heur: ' + bestState.value.toString());
-      delete bestState;
-      delete holdState;
-
-      // delete currentPiece;
-
-      currentPiece = tempArray.shift();
     }
-    this.movePiece();
+    else
+    {
+      // the hold piece has a better state so we move to that state
+      if(this.currentPieceState.value < this.holdPieceState.value)
+      {
+        if(this.holdPieceState.didLose)
+        {
+          console.log('we choose a losing state');
+        }
+
+        this.matrix = copy(this.holdPieceState.matrix);
+        this.score = this.holdPieceState.score;
+        this.movePiece("H" + this.holdPieceState.path);
+      }
+      // the current piece is better so we go with that move
+      else
+      {
+        if(this.currentPieceState.didLose)
+        {
+          console.log('we choose a losing state');
+        }
+
+        this.matrix = copy(this.currentPieceState.matrix);
+        this.score = this.currentPieceState.score;
+        this.movePiece(this.currentPieceState.path);
+      }
+    }
+    // delete this.currentPieceState;
+    // delete this.holdPieceState;
+
   }
 }
 
-BestFirstSearch.prototype.evaluatePiece = function (currentPiece)
+SteepestHillClimbing.prototype.getBestState = function (currentPiece, curMatrix)
 {
   // this is for the first hold piece that is 0
   if(currentPiece === 0)
   {
-    return null;
+    return 0;
   }
   var bestState = null;
-  // checks this particular tetromino rotation
+  // goes through all of the rotations and checks them one by one
   for(let j = 0; j < currentPiece.tetromino.length; ++j)
   {
     // resets the coordinates for the next piece rotation
@@ -137,25 +136,27 @@ BestFirstSearch.prototype.evaluatePiece = function (currentPiece)
     var width = this.getActualWidth(currentPiece.tetromino[j])
     for(let k = 0;this.x <= COLUMN - width; ++this.x)
     {
+      // move the piece to the very top
       this.y = -2;
+
       // finds the lowest point where the piece on go in the matrix
       this.hardDrop(currentPiece.tetromino[j]);
 
-      let tempScore = this.score;
+      var tempScore = this.score;
       // locks the piece into a temporary matrix that will get returned and
       // then heuristically evaluated
       // needs to use the copy function that i found online inorder to make a deep copy manually
-      let tempMatrix = this.tempLock(currentPiece.tetromino[j], copy(this.matrix));
+      var tempMatrix = this.tempLock(currentPiece.tetromino[j], copy(this.matrix));
 
       // to pass that the game is over with this state
       if(this.gameDone)
       {
-        var tempState = new State(tempMatrix, j, this.x, this.score - tempScore, true);
+        var tempState = new State(this.x, this.y, tempMatrix, j, currentPiece.tetromino[j], this.score, tempScore, true);
         this.gameDone = false;
       }
       else
       {
-        var tempState = new State(tempMatrix, j, this.x, this.score - tempScore, false);
+        var tempState = new State(this.x, this.y, tempMatrix, j, currentPiece.tetromino[j], this.score, tempScore, false);
       }
 
       if(bestState == null)
@@ -172,19 +173,16 @@ BestFirstSearch.prototype.evaluatePiece = function (currentPiece)
       }
       else
       {
+          // our current best state is better than this one
           delete tempState;
       }
       this.score = tempScore;
-
     }
-
-
-
   }
   return bestState;
 };
 
-BestFirstSearch.prototype.moveFarLeft = function(tetromino)
+SteepestHillClimbing.prototype.moveFarLeft = function(tetromino)
 {
   while(!this.collision(-1, 0, tetromino))
   {
@@ -193,7 +191,7 @@ BestFirstSearch.prototype.moveFarLeft = function(tetromino)
 }
 
 // hard drops the piece to the lowest row it can go and locks it in place
-BestFirstSearch.prototype.hardDrop = function(tetromino)
+SteepestHillClimbing.prototype.hardDrop = function(tetromino)
 {
   while(!this.collision(0, 1, tetromino))
   {
@@ -201,7 +199,7 @@ BestFirstSearch.prototype.hardDrop = function(tetromino)
   }
 }
 
-BestFirstSearch.prototype.collision = function(offsetX, offsetY, pieceType)
+SteepestHillClimbing.prototype.collision = function(offsetX, offsetY, pieceType)
 {
   // console.log("BEST first search collision");
   for(i = 0; i < pieceType.length; ++i)
@@ -242,7 +240,7 @@ BestFirstSearch.prototype.collision = function(offsetX, offsetY, pieceType)
   return false;
 }
 
-BestFirstSearch.prototype.tempLock = function(tetromino, cur_matrix)
+SteepestHillClimbing.prototype.tempLock = function(tetromino, cur_matrix)
 {
     for(let i = 0; i < tetromino.length; ++i)
     {
@@ -259,7 +257,7 @@ BestFirstSearch.prototype.tempLock = function(tetromino, cur_matrix)
            if(this.y + i < 0)
            {
                this.gameDone = true;
-               continue;
+               return cur_matrix;
            }
 
            // we lock the piece
@@ -308,63 +306,46 @@ BestFirstSearch.prototype.tempLock = function(tetromino, cur_matrix)
    return cur_matrix;
 }
 
-BestFirstSearch.prototype.updatePath = function(curState)
-{
-  // for which rotation we are using
-  this.path += "C".repeat(curState.tetrominoN);
-
-  // determines which way the piece will move
-  let dirNum = curState.x - 3;
-  if(dirNum < 0)
-  {
-    this.path += "L".repeat(Math.abs(dirNum));
-  }
-  else
-  {
-    this.path += "R".repeat(dirNum);
-  }
-  // for putting the piece all the way down
-  this.path += "D";
-}
-
 // moves the current piece based on the path instructions
-BestFirstSearch.prototype.movePiece = function()
+SteepestHillClimbing.prototype.movePiece = function(path)
 {
   // this will moves the pieces based on the path inputs that the heuristic generated
   // console.log("======= entering function movePiece =======");
-  console.log(this.path);
-  for(let i = 0; i < this.path.length; ++i)
+  // console.log("path: " + path);
+  for(let i = 0; i < path.length; ++i)
   {
-    if(this.path[i] == "L")
+    if(path[i] == "L")
     {
       // console.log("MOVING LEFT");
       game.moveLeft();
     }
-    else if (this.path[i] == "R")
+    else if (path[i] == "R")
     {
       // console.log("MOVING RIGHT");
       game.moveRight();
     }
-    else if (this.path[i] == "C")
+    else if (path[i] == "C")
     {
       // console.log("ROTATING");
       game.rotate();
     }
-    else if (this.path[i] == "D")
+    else if (path[i] == "D")
     {
       // console.log("HARD DROP");
       game.hardDrop();
     }
-    else if (this.path[i] == "H")
+    else if (path[i] == "H")
     {
       // console.log("HARD DROP");
       game.hold();
     }
   }
-  this.path = "";
   // console.log("======= leaving function movePiece =======");
 }
-BestFirstSearch.prototype.getActualWidth = function (tetro)
+
+// need this so we don't over extend on the right side of the board since moveFarLeft
+// goes until there is collision on the left
+SteepestHillClimbing.prototype.getActualWidth = function (tetro)
 {
   var width = Array(tetro.length).fill(0);
 
@@ -387,38 +368,24 @@ BestFirstSearch.prototype.getActualWidth = function (tetro)
   return end + 1;
 };
 
-function copy(o) {
-   var output, v, key;
-   output = Array.isArray(o) ? [] : {};
-   for (key in o) {
-       v = o[key];
-       output[key] = (typeof v === "object") ? copy(v) : v;
-   }
-   return output;
-}
-
-function sleep(ms)
-{
-  console.log("SLEEP");
-  var date = new Date();
-  var curDate = null;
-  do
-  {
-    curDate = new Date();
-  } while (curDate - date < ms);
-}
 // this class is similar to the Game class but it is going to have less member vairables
 // which will hopefully increase the speed and reduce memory
-function State(matrix, tetrominoN, curX, scoreIncrease, didLose)
+function State(x, y, tempMatrix, tetrominoN, activePiece, newScore, oldScore, didLose)
 {
+  this.x = x;
+  this.y = y;
   // the matrix that is our current state and will be evaluated
   // this is also going to be used to pass into the next state so we can build off of that
-  this.matrix = matrix;
-  this.scoreIncrease = scoreIncrease;
+  this.matrix = tempMatrix;
+
   // this will let us know which rotation to use for the tetromino piece
   this.tetrominoN = tetrominoN;
-  // the x value will determine if we move left and right and by how much
-  this.x = curX;
+  this.activePiece = activePiece;
+
+  this.score = newScore;
+  this.scoreIncrease = newScore - oldScore;
+
+  // if we lose going to this state
   this.loseState = didLose;
 
   // heuristic parameters to help evaluate the value
@@ -426,6 +393,9 @@ function State(matrix, tetrominoN, curX, scoreIncrease, didLose)
   this.colSum = Array(COLUMN).fill(0);
   // the best heuristic value we can get
   this.value = this.heuristic();
+
+  this.path = "";
+  this.updatePath();
 }
 
 // evaluatse the value of the state and provides a hueristic value for it
@@ -498,4 +468,23 @@ State.prototype.getStdHeight = function()
   }
 
   return standardDev / COLUMN;
+}
+
+State.prototype.updatePath = function()
+{
+  // for which rotation we are using
+  this.path += "C".repeat(this.tetrominoN);
+
+  // determines which way the piece will move
+  let dirNum = this.x - 3;
+  if(dirNum < 0)
+  {
+    this.path += "L".repeat(Math.abs(dirNum));
+  }
+  else
+  {
+    this.path += "R".repeat(dirNum);
+  }
+  // for putting the piece all the way down
+  this.path += "D";
 }
