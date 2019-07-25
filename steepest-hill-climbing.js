@@ -404,7 +404,7 @@ State.prototype.heuristic = function()
   this.getHeight();
 
   var numGaps = this.getNumGaps();
-  var maxHeight = Math.max(...this.maxHeight);
+  this.maxHeight = Math.max(...this.maxHeight);
   var std_height = this.getStdHeight();
 
   var scoreIncrease = this.scoreIncrease;
@@ -419,7 +419,7 @@ State.prototype.heuristic = function()
     si = 1;
   }
   // console.log("scoreIncrease: " + scoreIncrease.toString());
-  var heur = -(numGaps * 100) - (maxHeight / 2) - (std_height * 10) + (scoreIncrease * si);
+  var heur = -(numGaps * 100) - (this.maxHeight / 2) - (std_height * 10) + (scoreIncrease * si);
 
   // we want to lower the value of the state if we go to a losing one
   if(this.loseState)
