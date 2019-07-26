@@ -5,10 +5,10 @@
 function Main()
 {
   StartGame();
-  // var best = new BestFirstSearch();
-  // best.startAI();
-  var steepest = new SteepestHillClimbing();
-  steepest.startAI();
+  var best = new BestFirstSearch();
+  best.startAI();
+  // var steepest = new SteepestHillClimbing();
+  // steepest.startAI();
   console.log("END AI");
 }
 
@@ -18,50 +18,16 @@ function Main()
 //
 // function Main()
 // {
-  // myVar = setTimeout(movePiece, 500, path1);
-  // sleep(2000);
-  // myVar2 = setTimeout(movePiece, 500, path2);
-  // sleep(2000);
-  // myVar2 = setTimeout(movePiece, 500, path3);
-  // sleep(2000);
-  // myVar2 = setTimeout(movePiece, 500, path2);
-  // sleep(2000);
-  // myVar2 = setTimeout(movePiece, 500, path2);
-  // sleep(2000);
-  // myVar2 = setTimeout(movePiece, 500, path2);
-  // sleep(2000);
-  // myVar2 = setTimeout(movePiece, 500, path3);
-  // sleep(2000);
-  // myVar2 = setTimeout(movePiece, 500, path3);
-
-  // game.context.onload = movePiece(path3);
-  // game.context.onload = sleep(2000);
-  // game.context.onload = movePiece(path3);
-  // game.context.onload = sleep(2000);
-  // game.context.onload = movePiece(path3);
-  // game.context.onload = sleep(2000);
-  // game.context.onload = movePiece(path3);
-  // game.context.onload = sleep(2000);
-  // game.context.onload = movePiece(path3);
-  // game.context.onload = sleep(2000);
-  // game.context.onload = movePiece(path3);
-  // game.context.onload = sleep(2000);
-  // game.context.onload = movePiece(path3);
-
-  // movePiece(path3);
-  // sleep(2000);
-  // movePiece(path3);
-  // sleep(2000);
-  // movePiece(path3);
-  // sleep(2000);
-  // movePiece(path3);
-  // sleep(2000);
-  // movePiece(path3);
-  // sleep(2000);
-  // movePiece(path3);
-  // sleep(2000);
-  // movePiece(path3);
-
+//   var temp = [[1, 2, 3],
+//               [4, 5, 6],
+//               [7, 8, 9]];
+//
+//   edit1(temp);
+//   printMatrix(temp);
+// }
+// function edit1(matrix)
+// {
+//   matrix[0][0] = 0;
 // }
 
 //

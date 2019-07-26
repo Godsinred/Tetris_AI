@@ -22,9 +22,16 @@ function printMatrix(matrix)
 // the heuristic class we are going to use to evaluate the state of the game
 function BestFirstSearch()
 {
+  // list of all the open and closed states
   this.open = [];
   this.closed = [];
-  // this.matrix = Array(ROW).fill().map(() => Array(COLUMN).fill(0));
+
+  // the x and y for the piece with in the matrix. mainly used to pass between functions
+  this.x = 3;
+  this.y = -2;
+  this.matrix = Array(ROW).fill().map(() => Array(COLUMN).fill(0));
+  this.gameDone = false;
+  this.score = 0;
 }
 
 // the main function of the AI that will loop until the game is over
@@ -38,9 +45,10 @@ BestFirstSearch.prototype.startAI = function()
     this.open = [];
     this.closed = [];
 
-    // prepares out best first serach with bound. currently slicing 3 elements (bound = 3)
-    var tempState = new State(copy(game.matrix), game.listOfNextPieces.slice(0, 3), game.activePiece, game.holdPiece, game.score, "", game.gameOver);
-    this.open.append(tempState);
+    // this.copyGameMatrix();
+    // prepares out best first serach with bound. currently slicing 2 elements (bound = 2)
+    var tempState = new State(copy(this.matrix), game.listOfNextPieces.slice(0, 2), game.activePiece, game.holdPiece, game.score, "", game.gameOver);
+    this.open.push(tempState);
 
     // runs while there is something in the open list and our next best state has items to check
     // if not this is the state we go to
@@ -56,10 +64,14 @@ BestFirstSearch.prototype.startAI = function()
       }
 
       // generates the next states and put them on the open list
-      this.generateNextStates(tempState);
+      this.generateNextStates(tempState, false);
+      this.generateNextStates(tempState, true);
 
       // after visiting this state we can put it on the closed list
       this.closed.push(tempState);
+
+      console.log("num open states: " + this.open.length.toString());
+      console.log("num closed states: " + this.closed.length.toString());
 
       // now we can sort the open list
       this.sortOpen();
@@ -67,20 +79,34 @@ BestFirstSearch.prototype.startAI = function()
 
     // since we have our path we can move the set of pieces on the game board to match our state
     this.movePiece(tempState.path);
+    this.matrix = copy(tempState.matrix);
+    printMatrix(this.matrix)
   }
 }
 
-
-
-
-BestFirstSearch.prototype.generateNextStates = function (curState)
+// we add all the states we created to the open list
+BestFirstSearch.prototype.generateNextStates = function (curState, doHold)
 {
+  // sets the piece we are going to evaluate to create the next states with
+  var currentPiece = curState.activePiece;
+  if(doHold && curState.holdPiece == 0)
+  {
+    return -1;
+  }
+  else if (doHold && curState.holdPiece != 0)
+  {
+    currentPiece = curState.holdPiece;
+  }
+
   // goes through all of the rotations and checks them one by one
   for(let j = 0; j < currentPiece.tetromino.length; ++j)
   {
     // resets the coordinates for the next piece rotation
     this.y = -2;
     this.x = 3;
+
+    // makes a deep copy of the matrix to be passed into the other states
+    this.matrix = copy(curState.matrix);
 
     // moves the piece as far left as possible so that we can linearly search each state from left to right
     this.moveFarLeft(currentPiece.tetromino[j]);
@@ -92,50 +118,57 @@ BestFirstSearch.prototype.generateNextStates = function (curState)
       // move the piece to the very top
       this.y = -2;
 
+      var tempScore = this.score;
+
       // finds the lowest point where the piece on go in the matrix
       this.hardDrop(currentPiece.tetromino[j]);
 
-      var tempScore = this.score;
       // locks the piece into a temporary matrix that will get returned and
       // then heuristically evaluated
       // needs to use the copy function that i found online inorder to make a deep copy manually
       var tempMatrix = this.tempLock(currentPiece.tetromino[j], copy(this.matrix));
 
-      // to pass that the game is over with this state
-      if(this.gameDone)
+      var newPath = curState.path.slice();
+      // State(tempMatrix, listOfNextPieces, activePiece, holdPiece, score, path, didLose)
+      var tempPieces = curState.listOfNextPieces.slice();
+      if(doHold)
       {
-        var tempState = new State(this.x, this.y, tempMatrix, j, currentPiece.tetromino[j], this.score, tempScore, true);
-        this.gameDone = false;
+        var tempHold = new Piece(curState.activePiece.tetromino, curState.activePiece.color);
+        newPath += "H";
       }
       else
       {
-        var tempState = new State(this.x, this.y, tempMatrix, j, currentPiece.tetromino[j], this.score, tempScore, false);
-      }
-
-      if(bestState == null)
-      {
-        bestState = tempState;
-      }
-      else if (bestState.value < tempState.value)
-      {
-        // updates the bestState and deletes the old one
-        let temp = bestState;
-        bestState = tempState;
-        delete temp;
+        if (curState.holdPiece != 0)
+        {
+          var tempHold = new Piece(curState.holdPiece.tetromino, curState.holdPiece.color);
+        }
+        else
+        {
+          var tempHold = 0;
+        }
 
       }
-      else
-      {
-          // our current best state is better than this one
-          delete tempState;
-      }
+      ++countStates;
+      var tempActive = tempPieces.shift();
+      var tempState = new State(tempMatrix, tempPieces, tempActive, tempHold, this.score, this.updatePath(newPath, j), this.gameDone);
+
+      // bad state and we have gaps putting this piece down and we should just hold it
+      // if(tempState.numGaps > 0 && tempHold == 0)
+      // {
+      //     tempState = new State(copy(this.matrix), tempPieces, tempActive, new Piece(currentPiece.tetromino, currentPiece.color),
+      //     this.score, this.updatePath(newPath + "H", j), this.gameDone);
+      // }
+
+      // resets for next iter
+      this.gameDone = false;
       this.score = tempScore;
+
+      this.addToOpen(tempState);
     }
   }
-  return bestState;
 };
 
-State.prototype.moveFarLeft = function(tetromino)
+BestFirstSearch.prototype.moveFarLeft = function(tetromino)
 {
   while(!this.collision(-1, 0, tetromino))
   {
@@ -144,7 +177,7 @@ State.prototype.moveFarLeft = function(tetromino)
 }
 
 // hard drops the piece to the lowest row it can go and locks it in place
-State.prototype.hardDrop = function(tetromino)
+BestFirstSearch.prototype.hardDrop = function(tetromino)
 {
   while(!this.collision(0, 1, tetromino))
   {
@@ -152,7 +185,7 @@ State.prototype.hardDrop = function(tetromino)
   }
 }
 
-State.prototype.collision = function(offsetX, offsetY, pieceType)
+BestFirstSearch.prototype.collision = function(offsetX, offsetY, pieceType)
 {
   // console.log("BEST first search collision");
   for(i = 0; i < pieceType.length; ++i)
@@ -193,7 +226,7 @@ State.prototype.collision = function(offsetX, offsetY, pieceType)
   return false;
 }
 
-State.prototype.tempLock = function(tetromino, cur_matrix)
+BestFirstSearch.prototype.tempLock = function(tetromino, cur_matrix)
 {
     for(let i = 0; i < tetromino.length; ++i)
     {
@@ -260,11 +293,11 @@ State.prototype.tempLock = function(tetromino, cur_matrix)
 }
 
 // moves the current piece based on the path instructions
-State.prototype.movePiece = function(path)
+BestFirstSearch.prototype.movePiece = function(path)
 {
   // this will moves the pieces based on the path inputs that the heuristic generated
   // console.log("======= entering function movePiece =======");
-  // console.log("path: " + path);
+  console.log("path: " + path);
   for(let i = 0; i < path.length; ++i)
   {
     if(path[i] == "L")
@@ -298,7 +331,7 @@ State.prototype.movePiece = function(path)
 
 // need this so we don't over extend on the right side of the board since moveFarLeft
 // goes until there is collision on the left
-State.prototype.getActualWidth = function (tetro)
+BestFirstSearch.prototype.getActualWidth = function (tetro)
 {
   var width = Array(tetro.length).fill(0);
 
@@ -322,24 +355,96 @@ State.prototype.getActualWidth = function (tetro)
 };
 
 
-State.prototype.updatePath = function()
+BestFirstSearch.prototype.updatePath = function(path, tetrominoN)
 {
   // for which rotation we are using
-  this.path += "C".repeat(this.tetrominoN);
+  path += "C".repeat(tetrominoN);
 
   // determines which way the piece will move
   let dirNum = this.x - 3;
   if(dirNum < 0)
   {
-    this.path += "L".repeat(Math.abs(dirNum));
+    path += "L".repeat(Math.abs(dirNum));
   }
   else
   {
-    this.path += "R".repeat(dirNum);
+    path += "R".repeat(dirNum);
   }
   // for putting the piece all the way down
-  this.path += "D";
+  return path + "D";
 }
+
+// adds this state to the open list if it doesn't exist else it will update the item to which ever one is better
+BestFirstSearch.prototype.addToOpen = function(state)
+{
+
+  let found = false;
+  for (var item in this.open)
+  {
+    if(JSON.stringify(item.matrix) == JSON.stringify(state.matrix)
+        && JSON.stringify(item.listOfNextPieces) == JSON.stringify(state.listOfNextPieces)
+        && JSON.stringify(item.activePiece) == JSON.stringify(state.activePiece)
+        && JSON.stringify(item.holdPiece) == JSON.stringify(state.holdPiece)
+        && JSON.stringify(item.score) == JSON.stringify(state.score)
+        && JSON.stringify(item.path) == JSON.stringify(state.path)
+        && JSON.stringify(item.value) == JSON.stringify(state.value))
+    {
+      found = true;
+      console.log("DUPLICATE ELEMENT");
+      printMatrix(item.matrix);
+      print(state.matrix);
+      alert("matrix check");
+      break;
+    }
+  }
+  if(!found)
+  {
+    this.open.push(state);
+  }
+  else
+  {
+    // console.log("DUPLICATE ELEMENT");
+
+  }
+}
+
+BestFirstSearch.prototype.sortOpen = function(state)
+{
+  console.log("sorting: " + this.open.length.toString() + " elements");
+  // easy insertion sort. implement max heap later for practice (max on top)
+  for(var i = 1; i < this.open.length; ++i)
+  {
+    for(var j = i; j > 0; --j)
+    {
+      if (this.open[j].value > this.open[j - 1].value)
+      {
+        // swaps them
+        let temp = this.open[j];
+        this.open[j] = this.open[j - 1];
+        this.open[j - 1] = temp;
+      }
+    }
+  }
+};
+
+BestFirstSearch.prototype.copyGameMatrix = function()
+{
+  for(var i = 0; i < game.board.length; ++i)
+  {
+    for(var j = 0; j < game.board[i].length; ++j)
+    {
+      if(game.board[i][j] == EMPTY)
+      {
+        this.matrix[i][j] = 0;
+      }
+      else
+      {
+        this.matrix[i][j] = 1;
+      }
+    }
+  }
+}
+
 
 // evaluatse the value of the state and provides a hueristic value for it
 // ====================================================================================================== //
@@ -379,16 +484,16 @@ function State(tempMatrix, listOfNextPieces, activePiece, holdPiece, score, path
   this.numGaps = 0;
   this.scoreIncrease = 0;           // <=================================================================== TEMP 0 NEED TO FIX!!!
   // the best heuristic value we can get
-  this.value = this.heuristic();
+  this.value = 0;
+  this.heuristic();
 }
 
 State.prototype.heuristic = function()
 {
   this.updateHeights();
-
-  this.maxHeight = Math.max(...this.maxHeight);
   this.updateStdHeight();
   this.updateNumGaps();
+  this.maxHeight = Math.max(...this.maxHeight);
 
   var si = 0;
   if (this.scoreIncrease >= 40)
@@ -399,16 +504,15 @@ State.prototype.heuristic = function()
   {
     si = 1;
   }
+
   // console.log("scoreIncrease: " + scoreIncrease.toString());
-  var heur = -(this.numGaps * 100) - (this.maxHeight / 2) - (this.std_height * 10) + (this.scoreIncrease * si);
+  this.value = -(this.numGaps * 100) - (this.maxHeight / 2) - (this.std_height * 10) + (this.scoreIncrease * si);
 
   // we want to lower the value of the state if we go to a losing one
   if(this.loseState)
   {
-    heur -= 9999999999;
+    this.value -= 9999999999;
   }
-  // console.log(heur);
-  return heur;
 }
 
 // gets the sum of all the col and max heigh of the state
