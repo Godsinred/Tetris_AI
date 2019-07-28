@@ -1,19 +1,17 @@
 # Tetris AI
 
   The program allows the user to play the classic game of Tetris or if selected the AI can play a game for you.
-  A steepest hill climbing algorithm is used to choose the next state of the Tetris game.
+  A best first search algorithm is used to choose the next state of the Tetris game.
 
 ## Developers
 
 * **Jonathan Ishii**     ------ [Godsinred](https://github.com/Godsinred)
 
-## Short Video Of The Program
-
-N/A yet
-
 ## Getting Started
 
 You will need any browser with JavaScript capabilities. To run double click index.html and it will open in your default browser or drag and drop the file into a browser.
+
+To start the AI click the "Start AI" button or to play the game your self click the "Start Game" button.
 
 ### Prerequisites
 A web browser.
@@ -23,7 +21,29 @@ When the program is first started it creates the game board and sets up all the 
 
 From here we can either choose Start Game and play the game ourselves or Start AI.
 
-When Start AI is first called we initialize our steepest hill climbing object. Once initialized we call our steepestHillClimbing function which will run until the game is over. For each iteration of this function we grab the currently active piece along with the hold piece and the set of next 7 pieces. From there we evaluate the hold piece and active piece to see which state is the best. After evaluting them we append the path that we took to get there to the class path object. Atfer we evaluate all the pieces we call movePiece. This will move the set of pieces that we evaluated based on the move path that we generated. We repeat this until the game is over.
+When Start AI is first called we initialize our best first search object. Once initialized we call our startAI function which will run until the game is over. For each iteration of this function we grab the currently active piece along with the hold piece and the set of next 3 pieces from the game. This means you can call this function mid game to finish it for you. From here we create the states that the active and hold piece can go to next. We do this by looking at every rotation and position that the piece can be moved to. Next we add the states to the open list if they are not duplicates and sort the list by putting the states with the highest heuristic value in front. After the current state is no longer needed the state is put on the closed list.
+
+The program stops when the next state we get from the open list has no items in the list of next pieces, we assume that this is our best state that we can go to and move the Tetris pieces on the board accordingly. We repeat this until the game is over.
+
+### Challenges
+1. Trying to represent the state along with the state space. The game of Tetris looks simple from the outside, but trying to represent the state and how all the information of the game is going to be passed to is children is complicated.
+
+
+    * This was solved by having 2 classes. One for the best first serach algorithm to hold most of the game board / data and another one for the state of the game, given all the pieces available, the layout of the board, the score, etc. This allowed the best first search algorithm to have all the data readily available for the state so when it was created we can just pass all the data from the best first search class to the state class.
+
+
+2. Since the game of Tetris is to not lose there is no goal state except for not losing. This makes the general best first search impossible to do since it will continue running forever or until your computer blows up.
+
+    * This forces the change of the best first search goal. Knowing that we don't want to lose the goal becomes trying to stay alive and scoring the most points. This can be achieved by setting up the pieces having a good board layout along with some luck! We look at the number of gaps, standard deviation of the height, max height, and whether we can score or not.
+
+3. Optimization. The state space of Tetris is ginormous, so going through all the states and creating all of them is time and space expensive.
+
+    * A work around this is look at a small set of pieces at a time and choose the best state from there. Also dynamically creating all the states instead of creating everything before hand shaves off a lot of time as well.
+
+4. Displaying each move of the AI so that is visible to the human eye.
+
+    * Have not found a solution to this. Still new to JS so trying to figure out everything that is going on in the browser is complicated. Something with the canvas object (used for drawing the board) and the browser processing it slowly isn't optimized. (Tried to sleep, defer, async, and setTimeout).
+
 
 ## Break down of the code
 
@@ -128,38 +148,46 @@ Call this function for a random float from 0-1 and not next.
 ### function StartGame()
 This gets called when the button on the index.html get pressed so we can start the game for the user to play.
 
-## steepest-hill-climbing.js
+
+================================================================================================================================================================================================
+================================================================================================
+================================================================================================
+================================================================================================
+================================================================================================
+================================================================================================
+
+## best-first-serach.js
 This is where the AI algorithm takes place. All the helper functions along with the heuristic is held within this file.
 
-### Class SteepestHillClimbing
+### Class BestFirstSearch
 It has the current matrix state along with the path that the pieces will generate.
 
-#### Class SteepestHillClimbing - function steepestHillClimbing()
-Call this function to start the AI process. It will loop until the game is over. It starts off by getting the current, hold, and next set of pieces. It will look at the current and hold piece and evaluate the best state for each one. Once evaluated it will choose the higher value one and switch accordingly.
+#### Class BestFirstSearch - function startAi()
+This function is equivalent to calling a best first search function.
+Call this function to start the best first search process. It will loop until the game is over. It starts off by getting the current, hold, and next set of pieces. It will look at the current and hold piece and evaluate the best state for each one. Once evaluated it will choose the higher value one and switch accordingly.
 
-#### Class SteepestHillClimbing - function evaluatePiece()
-This function looks at every possible rotation and hard drop piece position from the top. It will evaluate it using the heuristic functino defined within the State class.
+#### Class BestFirstSearch - function generateNextStates()
+This function looks at every possible rotation and hard drop piece position from the top. It will evaluate it using the heuristic function defined within the State class.
 
-#### Class SteepestHillClimbing - function moveFarLeft()
+#### Class BestFirstSearch - function moveFarLeft()
 This moves the param piece all the way left until it collides with the wall or bound by the top.
 
-#### Class SteepestHillClimbing - function hardDrop()
+#### Class BestFirstSearch - function hardDrop()
 Drops the piece all the way to the bottom.
 
-#### Class SteepestHillClimbing - function collision()
+#### Class BestFirstSearch - function collision()
 Detects collision with in the board. Either with the boarders or another piece within the game.
 
-#### Class SteepestHillClimbing - function tempLock()
+#### Class BestFirstSearch - function tempLock()
 Locks the tetromino to the hardDrop location in the provided matrix. Once locked it will clear any lines and increment the score accordingly. The function will return the matrix back to the callee.
 
-
-#### Class SteepestHillClimbing - function updatePath()
+#### Class BestFirstSearch - function updatePath()
 Based on the current state the function will update the class member variable this.path accordingly. This way when movePiece is called it will know exactly where to move the tetromino.
 
-#### Class SteepestHillClimbing - function movePiece()
+#### Class BestFirstSearch - function movePiece()
 Moves the tetrominos based on the path.
 
-#### Class SteepestHillClimbing - function getActualWidth()
+#### Class BestFirstSearch - function getActualWidth()
 Gets the actual physical width of the tetromino and not just the array length.
 
 ### function copy()

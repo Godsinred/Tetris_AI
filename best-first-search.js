@@ -484,7 +484,7 @@ function State(tempMatrix, listOfNextPieces, activePiece, holdPiece, score, path
   // these will get updated in the heuristic call
   this.std_height = 0;
   this.numGaps = 0;
-  this.scoreIncrease = score - game.score;           // <=================================================================== TEMP 0 NEED TO FIX!!!
+  this.scoreIncrease = score - game.score; 
   // the best heuristic value we can get
   this.value = 0;
   this.heuristic();
@@ -553,7 +553,3 @@ State.prototype.updateStdHeight = function()
 
   this.std_height /= COLUMN;
 }
-
-State.prototype.duplicateState = function () {
-  return new State(this.matrix, this.listOfNextPieces, this.activePiece, this.holdPiece, this.score, this.path, this.didLose);
-};
