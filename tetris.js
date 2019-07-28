@@ -454,15 +454,10 @@ Game.prototype.lock = function()
          // might change this later so that you lose if the whole piece gets locked above the screen
          if(this.y + i < 0)
          {
-              console.log("GAME OVER");
-              console.log(this.activePiece.activeTetromino);
+             console.log("GAME OVER");
              console.log(this.x);
              console.log(this.y);
-             for(k = 0; k < this.activePiece.activeTetromino.length; ++k)
-             {
-               console.log(this.activePiece.activeTetromino[k]);
-             }
-
+             printMatrix(this.activePiece.activeTetromino);
              this.gameOver = true;
              return;
          }

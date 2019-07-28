@@ -31,7 +31,7 @@ function BestFirstSearch()
   this.y = -2;
   this.matrix = Array(ROW).fill().map(() => Array(COLUMN).fill(0));
   this.gameDone = false;
-  this.score = 0;
+  this.score = game.score;
 }
 
 // the main function of the AI that will loop until the game is over
@@ -45,9 +45,10 @@ BestFirstSearch.prototype.startAI = function()
     this.open = [];
     this.closed = [];
 
+    this.score = game.score;
     // this.copyGameMatrix();
-    // prepares out best first serach with bound. currently slicing 2 elements (bound = 2)
-    var tempState = new State(copy(this.matrix), game.listOfNextPieces.slice(0, 2), game.activePiece, game.holdPiece, game.score, "", game.gameOver);
+    // prepares out best first serach with bound. currently slicing 3 elements (bound = 3)
+    var tempState = new State(copy(this.matrix), game.listOfNextPieces.slice(0, 3), game.activePiece, game.holdPiece, game.score, "", game.gameOver);
     this.open.push(tempState);
 
     // runs while there is something in the open list and our next best state has items to check
@@ -70,17 +71,18 @@ BestFirstSearch.prototype.startAI = function()
       // after visiting this state we can put it on the closed list
       this.closed.push(tempState);
 
-      console.log("num open states: " + this.open.length.toString());
-      console.log("num closed states: " + this.closed.length.toString());
-
       // now we can sort the open list
-      this.sortOpen();
+      // console.log("sorting: " + this.open.length.toString() + " elements");
+      this.open.sort(function(a, b){return b.value - a.value});
+      // this.sortOpen();
     }
+    // console.log("num open states: " + this.open.length.toString());
+    // console.log("num closed states: " + this.closed.length.toString());
 
     // since we have our path we can move the set of pieces on the game board to match our state
     this.movePiece(tempState.path);
     this.matrix = copy(tempState.matrix);
-    printMatrix(this.matrix)
+    // printMatrix(this.matrix)
   }
 }
 
@@ -153,7 +155,7 @@ BestFirstSearch.prototype.generateNextStates = function (curState, doHold)
       var tempState = new State(tempMatrix, tempPieces, tempActive, tempHold, this.score, this.updatePath(newPath, j), this.gameDone);
 
       // bad state and we have gaps putting this piece down and we should just hold it
-      // if(tempState.numGaps > 0 && tempHold == 0)
+      // if(tempState.numGaps > 0 && tempHold == 0 && !doHold)
       // {
       //     tempState = new State(copy(this.matrix), tempPieces, tempActive, new Piece(currentPiece.tetromino, currentPiece.color),
       //     this.score, this.updatePath(newPath + "H", j), this.gameDone);
@@ -377,17 +379,22 @@ BestFirstSearch.prototype.updatePath = function(path, tetrominoN)
 // adds this state to the open list if it doesn't exist else it will update the item to which ever one is better
 BestFirstSearch.prototype.addToOpen = function(state)
 {
+  var strMat = JSON.stringify(state.matrix);
+  var strNextPieces = JSON.stringify(state.listOfNextPieces);
+  var strActive = JSON.stringify(state.activePiece);
+  var strHold = JSON.stringify(state.holdPiece);
+
 
   let found = false;
   for (var item in this.open)
   {
-    if(JSON.stringify(item.matrix) == JSON.stringify(state.matrix)
-        && JSON.stringify(item.listOfNextPieces) == JSON.stringify(state.listOfNextPieces)
-        && JSON.stringify(item.activePiece) == JSON.stringify(state.activePiece)
-        && JSON.stringify(item.holdPiece) == JSON.stringify(state.holdPiece)
-        && JSON.stringify(item.score) == JSON.stringify(state.score)
-        && JSON.stringify(item.path) == JSON.stringify(state.path)
-        && JSON.stringify(item.value) == JSON.stringify(state.value))
+    if(JSON.stringify(item.matrix) == strMat
+        && JSON.stringify(item.listOfNextPieces) == strNextPieces
+        && JSON.stringify(item.activePiece) == strActive
+        && JSON.stringify(item.holdPiece) == strHold
+        && item.score == state.score
+        && item.path == state.path
+        && item.value == state.value)
     {
       found = true;
       console.log("DUPLICATE ELEMENT");
@@ -399,12 +406,7 @@ BestFirstSearch.prototype.addToOpen = function(state)
   }
   if(!found)
   {
-    this.open.push(state);
-  }
-  else
-  {
-    // console.log("DUPLICATE ELEMENT");
-
+    this.open.unshift(state);
   }
 }
 
@@ -482,7 +484,7 @@ function State(tempMatrix, listOfNextPieces, activePiece, holdPiece, score, path
   // these will get updated in the heuristic call
   this.std_height = 0;
   this.numGaps = 0;
-  this.scoreIncrease = 0;           // <=================================================================== TEMP 0 NEED TO FIX!!!
+  this.scoreIncrease = score - game.score;           // <=================================================================== TEMP 0 NEED TO FIX!!!
   // the best heuristic value we can get
   this.value = 0;
   this.heuristic();
