@@ -52,8 +52,8 @@ BestFirstSearch.prototype.startAI = function()
 
     this.score = game.score;
     // this.copyGameMatrix();
-    // prepares out best first serach with bound. currently slicing 3 elements (bound = 3)
-    var tempState = new State(copy(this.matrix), game.listOfNextPieces.slice(0, 2),
+    // prepares out best first serach with bound. currently slicing 3 elements
+    var tempState = new State(copy(this.matrix), game.listOfNextPieces.slice(0, 3),
       game.activePiece, game.holdPiece, game.score, "", game.gameOver, this.numGaps, this.maxHeight, this.std_height, this.scoreIncrease);
     this.open.push(tempState);
 
@@ -162,7 +162,7 @@ BestFirstSearch.prototype.generateNextStates = function (curState, doHold)
       var tempActive = tempPieces.shift();
       var tempState = new State(tempMatrix, tempPieces, tempActive, tempHold, this.score, this.updatePath(newPath, j), this.gameDone,
                   this.numGaps, this.maxHeight, this.std_height, this.scoreIncrease);
-
+// Uncomment this to user hold piece. need to double check that it works becaue the fitness for it is a little low when i run it
       // bad state and we have gaps putting this piece down and we should just hold it
       // if(tempState.numGaps > 0 && tempHold == 0 && !doHold)
       // {

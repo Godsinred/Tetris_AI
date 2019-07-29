@@ -1,10 +1,13 @@
 var mutationRate = 0.05;
 var mutationStep = 0.20;
 var populationSize = 50;
-var numberOfGenerations = 1;
+var numberOfGenerations = 5;
+
+var numELites = 10;
 
 // all the genomes
 var genomes = [];
+
 // this will be called from the start AI button from index.html
 function Main()
 {
@@ -16,10 +19,9 @@ function Main()
 
 function GA()
 {
-
   // initializes the starting population
   initializePopulation();
-
+  var bestGenome = null;
   // go through all the generations
   for(var currentGeneration = 0; currentGeneration < numberOfGenerations; ++currentGeneration)
   {
@@ -28,15 +30,13 @@ function GA()
 
     genomes.sort(function(a, b){return b.fitness - a.fitness});
     printMatrix(genomes);
+
+    bestGenome = genomes[0]
     // evaluate and initalize the next generation
-        // we need to select the fittest genomes
-
-        // we need to crossover
-
-        // we need to mutate them
-
-
+    makeNextGeneration();
   }
+  console.log("Here is our best genome after " + numberOfGenerations.toString() + "generations.");
+  printMatrix(bestGenome)
 }
 
 function initializePopulation()
@@ -58,7 +58,7 @@ function initializePopulation()
  		};
     genomes.push(genome);
   }
-  console.log(genomes);
+  // console.log(genomes);
 }
 
 
@@ -67,7 +67,7 @@ function runGenomes()
 {
   for(var i = 0; i < genomes.length; ++i)
   {
-    console.log("Genome: " + i.toString());
+    // console.log("Genome: " + i.toString());
     // the current tetris piece in use
     randomSeeded = new Random(1);
     game = new Game();
@@ -81,7 +81,65 @@ function runGenomes()
     StartGame();
     var best = new BestFirstSearch(genomes[i].numGaps, genomes[i].maxHeight, genomes[i].std_height, genomes[i].scoreIncrease);
     genomes[i].fitness = best.startAI();
-    console.log("Genome fitness: " + genomes[i].fitness);
+    // console.log("Genome fitness: " + genomes[i].fitness);
+  }
+}
+
+function makeNextGeneration()
+{
+  // we need to select the fittest genomes
+  var elites = genomes.slice(0,numELites);
+
+  // we need to crossover and mutate the parents to make children
+  genomes = [];   // clears the current population
+  for(var i = 0; i < populationSize; ++i)
+  {
+    genomes.push(makeChild(elites[Math.floor(Math.random() * numELites)], elites[Math.floor(Math.random() * numELites)]));
   }
 
+
+  // store them somewhere
+}
+
+function makeChild(parent1, parent2)
+{
+  // Crossover is happening here between the 2 parents
+  var genome = {
+    // randomly assigns values from one of the parents
+    numGaps: randomChoice(parent1.numGaps, parent2.numGaps),
+    maxHeight: randomChoice(parent1.maxHeight, parent2.maxHeight),
+    std_height: randomChoice(parent1.std_height, parent2.std_height),
+    scoreIncrease: randomChoice(parent1.scoreIncrease, parent2.scoreIncrease),
+    fitness: 0
+  };
+
+  // We mutate the child here. yes i know im horrible
+  // Each value has a change of being mutated. if the random number is less than the mutation rate we change it
+  if (Math.random() < mutationRate) {
+ 		genome.numGaps = genome.numGaps + Math.random() * mutationStep * 2 - mutationStep;
+ 	}
+ 	if (Math.random() < mutationRate) {
+ 		genome.maxHeight = genome.maxHeight + Math.random() * mutationStep * 2 - mutationStep;
+ 	}
+ 	if (Math.random() < mutationRate) {
+ 		genome.std_height = genome.std_height + Math.random() * mutationStep * 2 - mutationStep;
+ 	}
+ 	if (Math.random() < mutationRate) {
+ 		genome.scoreIncrease = genome.scoreIncrease + Math.random() * mutationStep * 2 - mutationStep;
+ 	}
+
+  return genome;
+}
+
+// retuens a random choice between the 2
+function randomChoice(x, y)
+{
+   if (Math.round(Math.random()) === 0)
+   {
+     return copy(propOne);
+   }
+   else
+   {
+     return copy(propTwo);
+   }
 }

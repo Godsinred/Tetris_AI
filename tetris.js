@@ -760,7 +760,6 @@ function drop()
   {
     // console.log("number of states created: " + countStates.toString());
     // console.log("number of ms: " + (Date.now() - startTime).toString());
-    console.log("GAME fitness: " + game.score.toString());
     console.log("DELETE GAME AND THEN BEST.GAME");
     // removed this for the GA
     //alert("Game Over from tetris.js");

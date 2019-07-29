@@ -1,0 +1,25 @@
+{
+  "name": "tetris_ai",
+  "version": "1.0.0",
+  "description": "The program allows the user to play the classic game of Tetris or if selected the AI can play a game for you.   A best first search algorithm is used to choose the next state of the Tetris game.",
+  "main": "genetic-algorithm.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Godsinred/Tetris_AI.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Godsinred/Tetris_AI/issues"
+  },
+  "homepage": "https://github.com/Godsinred/Tetris_AI#readme",
+  "dependencies": {
+    "csv-writer": "^1.5.0",
+    "fast-csv": "^3.3.0",
+    "fs": "0.0.1-security",
+    "require": "^2.4.20"
+  }
+}
