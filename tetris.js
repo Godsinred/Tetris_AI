@@ -1,6 +1,6 @@
 // for my curiosity
-var countStates = 0;
-var startTime = Date.now();
+// var countStates = 0;
+// var startTime = Date.now();
 
 // The size of the convas that the tetris game is going to be played on
 const ROW = 20;
@@ -758,12 +758,12 @@ function drop()
   }
   else
   {
-    delete game;
-    delete best;
-    console.log("number of states created: " + countStates.toString());
-    console.log("number of ms: " + (Date.now() - startTime).toString());
+    // console.log("number of states created: " + countStates.toString());
+    // console.log("number of ms: " + (Date.now() - startTime).toString());
+    console.log("GAME fitness: " + game.score.toString());
     console.log("DELETE GAME AND THEN BEST.GAME");
-    alert("Game Over from tetris.js");
+    // removed this for the GA
+    //alert("Game Over from tetris.js");
   }
 }
 

@@ -7,14 +7,20 @@
 
 * **Jonathan Ishii**     ------ [Godsinred](https://github.com/Godsinred)
 
+## Prerequisites
+A web browser.
+Node.js
+
 ## Getting Started
 
 You will need any browser with JavaScript capabilities. To run double click index.html and it will open in your default browser or drag and drop the file into a browser.
 
-To start the AI click the "Start AI" button or to play the game your self click the "Start Game" button.
+Install Nod.js --> https://nodejs.org/en/
+  * After downloading it install it onto your computer
+  * In your terminal run command: npm i -s csv-writer
 
-### Prerequisites
-A web browser.
+
+To start the AI click the "Start AI" button or to play the game your self click the "Start Game" button.
 
 ## Technical Implementation
 When the program is first started it creates the game board and sets up all the GUI.

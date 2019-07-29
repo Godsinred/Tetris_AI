@@ -20,7 +20,7 @@ function printMatrix(matrix)
 }
 
 // the heuristic class we are going to use to evaluate the state of the game
-function BestFirstSearch()
+function BestFirstSearch(numGaps, maxHeight, std_height, scoreIncrease)
 {
   // list of all the open and closed states
   this.open = [];
@@ -32,6 +32,11 @@ function BestFirstSearch()
   this.matrix = Array(ROW).fill().map(() => Array(COLUMN).fill(0));
   this.gameDone = false;
   this.score = game.score;
+
+  this.numGaps = numGaps;
+  this.maxHeight = maxHeight;
+  this.std_height = std_height;
+  this.scoreIncrease = scoreIncrease;
 }
 
 // the main function of the AI that will loop until the game is over
@@ -48,7 +53,8 @@ BestFirstSearch.prototype.startAI = function()
     this.score = game.score;
     // this.copyGameMatrix();
     // prepares out best first serach with bound. currently slicing 3 elements (bound = 3)
-    var tempState = new State(copy(this.matrix), game.listOfNextPieces.slice(0, 3), game.activePiece, game.holdPiece, game.score, "", game.gameOver);
+    var tempState = new State(copy(this.matrix), game.listOfNextPieces.slice(0, 2),
+      game.activePiece, game.holdPiece, game.score, "", game.gameOver, this.numGaps, this.maxHeight, this.std_height, this.scoreIncrease);
     this.open.push(tempState);
 
     // runs while there is something in the open list and our next best state has items to check
@@ -82,8 +88,10 @@ BestFirstSearch.prototype.startAI = function()
     // since we have our path we can move the set of pieces on the game board to match our state
     this.movePiece(tempState.path);
     this.matrix = copy(tempState.matrix);
-    // printMatrix(this.matrix)
+
   }
+  printMatrix(this.matrix)
+  return this.score;
 }
 
 // we add all the states we created to the open list
@@ -150,14 +158,16 @@ BestFirstSearch.prototype.generateNextStates = function (curState, doHold)
         }
 
       }
-      ++countStates;
+      // ++countStates;
       var tempActive = tempPieces.shift();
-      var tempState = new State(tempMatrix, tempPieces, tempActive, tempHold, this.score, this.updatePath(newPath, j), this.gameDone);
+      var tempState = new State(tempMatrix, tempPieces, tempActive, tempHold, this.score, this.updatePath(newPath, j), this.gameDone,
+                  this.numGaps, this.maxHeight, this.std_height, this.scoreIncrease);
 
       // bad state and we have gaps putting this piece down and we should just hold it
       // if(tempState.numGaps > 0 && tempHold == 0 && !doHold)
       // {
-      //     tempState = new State(copy(this.matrix), tempPieces, tempActive, new Piece(currentPiece.tetromino, currentPiece.color),
+      //     tempState = new State(copy(this.matrix), tempPieces, tempActive, new Piece(currentPiece.tetromino, currentPiece.color,
+      //             this.numGaps, this.maxHeight, this.std_height, this.scoreIncrease),
       //     this.score, this.updatePath(newPath + "H", j), this.gameDone);
       // }
 
@@ -452,8 +462,13 @@ BestFirstSearch.prototype.copyGameMatrix = function()
 // ====================================================================================================== //
 // =========================== Heuristic Functions and State============================================= //
 // ====================================================================================================== //
-function State(tempMatrix, listOfNextPieces, activePiece, holdPiece, score, path, didLose)
+function State(tempMatrix, listOfNextPieces, activePiece, holdPiece, score, path, didLose,
+                numGaps, maxHeight, std_height, scoreIncrease)
 {
+  this.numGapsWeight = numGaps;
+  this.maxHeightWeight = maxHeight;
+  this.std_heightWeight = std_height;
+  this.scoreIncreaseWeight = scoreIncrease;
   // the matrix that is our current state and will be evaluated
   // this is also going to be used to pass into the next state so we can build off of that
   this.matrix = tempMatrix;
@@ -484,7 +499,7 @@ function State(tempMatrix, listOfNextPieces, activePiece, holdPiece, score, path
   // these will get updated in the heuristic call
   this.std_height = 0;
   this.numGaps = 0;
-  this.scoreIncrease = score - game.score; 
+  this.scoreIncrease = score - game.score;
   // the best heuristic value we can get
   this.value = 0;
   this.heuristic();
@@ -497,18 +512,9 @@ State.prototype.heuristic = function()
   this.updateNumGaps();
   this.maxHeight = Math.max(...this.maxHeight);
 
-  var si = 0;
-  if (this.scoreIncrease >= 40)
-  {
-    si = 500;
-  }
-  else
-  {
-    si = 1;
-  }
-
   // console.log("scoreIncrease: " + scoreIncrease.toString());
-  this.value = -(this.numGaps * 100) - (this.maxHeight / 2) - (this.std_height * 10) + (this.scoreIncrease * si);
+  this.value = (this.numGaps * this.numGapsWeight) + (this.maxHeight * this.maxHeightWeight) +
+              (this.std_height * this.std_heightWeight) + (this.scoreIncrease * this.scoreIncreaseWeight);
 
   // we want to lower the value of the state if we go to a losing one
   if(this.loseState)
