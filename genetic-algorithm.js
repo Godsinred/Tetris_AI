@@ -1,9 +1,10 @@
 var mutationRate = 0.05;
 var mutationStep = 0.20;
-var populationSize = 50;
-var numberOfGenerations = 5;
+var populationSize = 10;
+var currentGeneration = 0
+var numberOfGenerations = 3;
 
-var numELites = 10;
+var numELites = 5;
 
 // all the genomes
 var genomes = [];
@@ -23,20 +24,26 @@ function GA()
   initializePopulation();
   var bestGenome = null;
   // go through all the generations
-  for(var currentGeneration = 0; currentGeneration < numberOfGenerations; ++currentGeneration)
+  for(currentGeneration = 0; currentGeneration < numberOfGenerations;)
   {
     // we need to play the game with the genoes and store the score into the genome.fitness
     runGenomes();
 
     genomes.sort(function(a, b){return b.fitness - a.fitness});
-    printMatrix(genomes);
+    // printMatrix(genomes);
 
-    bestGenome = genomes[0]
+    bestGenome = genomes[0];
+    console.log("Best fitness for gen " + currentGeneration.toString() + ": " + bestGenome.fitness.toString());
+    console.log("Genome weights for gen: ");
+    console.log(bestGenome);
+
     // evaluate and initalize the next generation
     makeNextGeneration();
   }
-  console.log("Here is our best genome after " + numberOfGenerations.toString() + "generations.");
-  printMatrix(bestGenome)
+  --currentGeneration;
+  console.log("Here is our best genome for the last generation " + numberOfGenerations.toString());
+  console.log("Best fitness for " + currentGeneration.toString() + ": " + bestGenome.fitness.toString());
+  console.log(bestGenome);
 }
 
 function initializePopulation()
@@ -45,6 +52,7 @@ function initializePopulation()
   for(var i = 0; i < populationSize; ++i)
   {
     var genome = {
+      generation: currentGeneration,
  			// the number of gaps a certain state has
  			numGaps: Math.random() - 0.5,
  			// the highest point of the board
@@ -58,7 +66,8 @@ function initializePopulation()
  		};
     genomes.push(genome);
   }
-  // console.log(genomes);
+  console.log("init pop");
+  printMatrix(genomes);
 }
 
 
@@ -87,6 +96,7 @@ function runGenomes()
 
 function makeNextGeneration()
 {
+  ++currentGeneration;
   // we need to select the fittest genomes
   var elites = genomes.slice(0,numELites);
 
@@ -97,34 +107,39 @@ function makeNextGeneration()
     genomes.push(makeChild(elites[Math.floor(Math.random() * numELites)], elites[Math.floor(Math.random() * numELites)]));
   }
 
-
-  // store them somewhere
+  console.log("Next Generation" + currentGeneration.toString());
+  printMatrix(genomes);
 }
 
 function makeChild(parent1, parent2)
 {
   // Crossover is happening here between the 2 parents
   var genome = {
+    generation: currentGeneration,
     // randomly assigns values from one of the parents
     numGaps: randomChoice(parent1.numGaps, parent2.numGaps),
     maxHeight: randomChoice(parent1.maxHeight, parent2.maxHeight),
     std_height: randomChoice(parent1.std_height, parent2.std_height),
     scoreIncrease: randomChoice(parent1.scoreIncrease, parent2.scoreIncrease),
-    fitness: 0
+    fitness: -1
   };
 
   // We mutate the child here. yes i know im horrible
   // Each value has a change of being mutated. if the random number is less than the mutation rate we change it
-  if (Math.random() < mutationRate) {
+  if (Math.random() < mutationRate)
+  {
  		genome.numGaps = genome.numGaps + Math.random() * mutationStep * 2 - mutationStep;
  	}
- 	if (Math.random() < mutationRate) {
+ 	if (Math.random() < mutationRate)
+  {
  		genome.maxHeight = genome.maxHeight + Math.random() * mutationStep * 2 - mutationStep;
  	}
- 	if (Math.random() < mutationRate) {
+ 	if (Math.random() < mutationRate)
+  {
  		genome.std_height = genome.std_height + Math.random() * mutationStep * 2 - mutationStep;
  	}
- 	if (Math.random() < mutationRate) {
+ 	if (Math.random() < mutationRate)
+  {
  		genome.scoreIncrease = genome.scoreIncrease + Math.random() * mutationStep * 2 - mutationStep;
  	}
 
@@ -136,10 +151,10 @@ function randomChoice(x, y)
 {
    if (Math.round(Math.random()) === 0)
    {
-     return copy(propOne);
+     return x;
    }
    else
    {
-     return copy(propTwo);
+     return y;
    }
 }

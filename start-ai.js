@@ -6,7 +6,8 @@
 // {
 //   StartGame();
 //    // Run individual numbers to make sure that it is running properly
-//   var best = new BestFirstSearch(-0.40581437384986274, -0.45785735666935046, -0.27585934786033983, 0.047558030680479035);
+//    // Think this one got 5000+ score
+//   var best = new BestFirstSearch(-0.4932883065709226, -0.4479193378933901, -0.3616679820549036, 0.035892677521849325);
 //   best.startAI();
 //   // var steepest = new SteepestHillClimbing();
 //   // steepest.startAI();

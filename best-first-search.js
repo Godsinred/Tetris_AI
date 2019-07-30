@@ -90,7 +90,7 @@ BestFirstSearch.prototype.startAI = function()
     this.matrix = copy(tempState.matrix);
 
   }
-  printMatrix(this.matrix)
+  // printMatrix(this.matrix);
   return this.score;
 }
 
@@ -309,7 +309,7 @@ BestFirstSearch.prototype.movePiece = function(path)
 {
   // this will moves the pieces based on the path inputs that the heuristic generated
   // console.log("======= entering function movePiece =======");
-  console.log("path: " + path);
+  // console.log("path: " + path);
   for(let i = 0; i < path.length; ++i)
   {
     if(path[i] == "L")
