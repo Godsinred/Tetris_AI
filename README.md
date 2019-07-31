@@ -3,33 +3,38 @@
   The program allows the user to play the classic game of Tetris or if selected the AI can play a game for you.
   A best first search algorithm is used to choose the next state of the Tetris game.
 
+  This program also has an option to run a genetic algorithm (GA).
+
 ## Developers
 
 * **Jonathan Ishii**     ------ [Godsinred](https://github.com/Godsinred)
 
 ## Prerequisites
 A web browser.
-Node.js
+
+Pythin 3.6 (if you want to convert the GA console output to a csv for analysis)
+Download:
+  * https://www.python.org/downloads/
 
 ## Getting Started
 
 You will need any browser with JavaScript capabilities. To run double click index.html and it will open in your default browser or drag and drop the file into a browser.
 
-Install Nod.js --> https://nodejs.org/en/
-  * After downloading it install it onto your computer
-  * In your terminal run command: npm i -s csv-writer
-
-
-To start the AI click the "Start AI" button or to play the game your self click the "Start Game" button.
+To start the AI click the "Play For Me" button or to play the game your self click the "Start Game" button.
+If you want to run the GA click "Start GA"
 
 ## Technical Implementation
 When the program is first started it creates the game board and sets up all the GUI.
 
 From here we can either choose Start Game and play the game ourselves or Start AI.
 
+### Breakdown for Best First Search
 When Start AI is first called we initialize our best first search object. Once initialized we call our startAI function which will run until the game is over. For each iteration of this function we grab the currently active piece along with the hold piece and the set of next 3 pieces from the game. This means you can call this function mid game to finish it for you. From here we create the states that the active and hold piece can go to next. We do this by looking at every rotation and position that the piece can be moved to. Next we add the states to the open list if they are not duplicates and sort the list by putting the states with the highest heuristic value in front. After the current state is no longer needed the state is put on the closed list.
 
 The program stops when the next state we get from the open list has no items in the list of next pieces, we assume that this is our best state that we can go to and move the Tetris pieces on the board accordingly. We repeat this until the game is over.
+
+### Breakdown for Genetic Algorithm
+The GA starts off by initializing the genome population by randomly creating genomes for a predefined population size. Once created the genomes are tested and given a certain fitness level based off of their performance. Selecting the, X, elitist genomes we choose them randomly to breed and make children. It is inhumane, but we mutate their children's attributes if the random value is below the mutation rate. We mutate them by adding a random number multiplied by the mutation step times 2 and then subtract the mutation step. We do it this way so we can either increase the attribute in a positive or negative direction. This is done for the whole size of the population and we viciously remove the parents from existence, *cough* memory, because they are no longer needed. This process of selection, crossover, and mutation is done for as many iteration as we would like. 
 
 ### Challenges
 1. Trying to represent the state along with the state space. The game of Tetris looks simple from the outside, but trying to represent the state and how all the information of the game is going to be passed to is children is complicated.
@@ -49,6 +54,10 @@ The program stops when the next state we get from the open list has no items in 
 4. Displaying each move of the AI so that is visible to the human eye.
 
     * Have not found a solution to this. Still new to JS so trying to figure out everything that is going on in the browser is complicated. Something with the canvas object (used for drawing the board) and the browser processing it slowly isn't optimized. (Tried to sleep, defer, async, and setTimeout).
+
+5. Writing to a file in js.
+
+  * Since js is meant to be server side. There are issues trying to write the output of the GA to a csv for further analysis. The work around was writing everything to the console and then converting that into a csv file using python.
 
 
 ## Break down of the code
@@ -222,6 +231,7 @@ Has all the tetrominos and their rotations in arrays.
 ## /assets
 This folder has all the css and images for the web page.
 
+## No breakdown of the code for the python or GA.
 
 ## Contribute
 Contributions are always welcome!
