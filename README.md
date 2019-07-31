@@ -36,6 +36,10 @@ The program stops when the next state we get from the open list has no items in 
 ### Breakdown for Genetic Algorithm
 The GA starts off by initializing the genome population by randomly creating genomes for a predefined population size. Once created the genomes are tested and given a certain fitness level based off of their performance. Selecting the, X, elitist genomes we choose them randomly to breed and make children. It is inhumane, but we mutate their children's attributes if the random value is below the mutation rate. We mutate them by adding a random number multiplied by the mutation step times 2 and then subtract the mutation step. We do it this way so we can either increase the attribute in a positive or negative direction. This is done for the whole size of the population and we viciously remove the parents from existence, *cough* memory, because they are no longer needed. This process of selection, crossover, and mutation is done for as many iteration as we would like. 
 
+This chart breaks down the max, average, and min genome per generation. We can see over the course of 50 genomes that the GA converges to a local maxima of about 12010.
+
+![GA chart](assets/ga_chart.png)
+
 ### Challenges
 1. Trying to represent the state along with the state space. The game of Tetris looks simple from the outside, but trying to represent the state and how all the information of the game is going to be passed to is children is complicated.
 
