@@ -454,10 +454,10 @@ Game.prototype.lock = function()
          // might change this later so that you lose if the whole piece gets locked above the screen
          if(this.y + i < 0)
          {
-             // console.log("GAME OVER");
-             // console.log(this.x);
-             // console.log(this.y);
-             // printMatrix(this.activePiece.activeTetromino);
+             console.log("GAME OVER");
+             console.log(this.x);
+             console.log(this.y);
+             printMatrix(this.activePiece.activeTetromino);
              this.gameOver = true;
              return;
          }
@@ -760,7 +760,7 @@ function drop()
   {
     // console.log("number of states created: " + countStates.toString());
     // console.log("number of ms: " + (Date.now() - startTime).toString());
-    // console.log("DELETE GAME AND THEN BEST.GAME");
+    console.log("DELETE GAME AND THEN BEST.GAME");
     // removed this for the GA
     //alert("Game Over from tetris.js");
   }
